@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import { useState, useEffect, useCallback } from 'react';
-import { format, parseISO, parse } from 'date-fns';
+import { format, parse, parseISO } from 'date-fns';
 import { Calendar as CalendarIcon, DollarSign, Euro, RefreshCw, Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -18,17 +18,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 
-interface UsdQuote {
+interface Quote {
   compra: number | null;
   venta: number | null;
 }
 
 interface CurrencyData {
-  USD_BLUE: UsdQuote | null;
-  USD_OFICIAL: UsdQuote | null;
-  EUR: number | null;
-  quoteDate: string | null; // Date for which USD quotes are (YYYY-MM-DD from selectedDate)
-  eurLatestUpdate: string | null; // Timestamp of latest EUR quote from its API
+  USD_BLUE: Quote | null;
+  USD_OFICIAL: Quote | null;
+  EUR: Quote | null;
+  quoteDate: string | null; // Date for which ALL quotes are (YYYY-MM-DD from selectedDate)
 }
 
 interface ModalContent {
@@ -59,72 +58,74 @@ export default function PesoWatcherPage() {
       setIsLoading(true);
       setCurrencyData(null);
 
-      const formattedDateForApi = format(selectedDate, 'yyyy-MM-dd');
-      let usdBlueValues: UsdQuote | null = null;
-      let usdOficialValues: UsdQuote | null = null;
-      let eurValue: number | null = null;
-      let eurApiUpdateTime: string | null = null;
+      const formattedDateForUsdApi = format(selectedDate, 'yyyy-MM-dd');
+      const year = format(selectedDate, 'yyyy');
+      const month = format(selectedDate, 'MM');
+      const day = format(selectedDate, 'dd');
+      
+      let usdBlueValues: Quote | null = null;
+      let usdOficialValues: Quote | null = null;
+      let eurValues: Quote | null = null;
       const errors: string[] = [];
 
-      // Fetch USD Blue data from Argentinadatos API
+      // Fetch USD Blue data
       try {
-        const usdBlueResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/blue/${formattedDateForApi}`);
+        const usdBlueResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/blue/${formattedDateForUsdApi}`);
         if (usdBlueResponse.ok) {
           const data = await usdBlueResponse.json();
           if (data && typeof data.compra === 'number' && typeof data.venta === 'number') {
             usdBlueValues = { compra: data.compra, venta: data.venta };
           } else {
-            errors.push(`USD (Blue) data for ${formattedDateForApi} not found or compra/venta fields missing/invalid.`);
+            errors.push(`USD (Blue) data for ${formattedDateForUsdApi} not found or compra/venta fields missing/invalid.`);
           }
         } else {
-          let errorMsg = `USD (Blue) API (${formattedDateForApi}): ${usdBlueResponse.status} ${usdBlueResponse.statusText || 'Failed to fetch'}`;
-          try { const errorJson = await usdBlueResponse.json(); if (errorJson.error) errorMsg = `USD (Blue) API Error (${formattedDateForApi}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Blue) API Error (${formattedDateForApi}): ${errorJson.message}`;} catch {}
+          let errorMsg = `USD (Blue) API (${formattedDateForUsdApi}): ${usdBlueResponse.status} ${usdBlueResponse.statusText || 'Failed to fetch'}`;
+          try { const errorJson = await usdBlueResponse.json(); if (errorJson.error) errorMsg = `USD (Blue) API Error (${formattedDateForUsdApi}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Blue) API Error (${formattedDateForUsdApi}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
       } catch (error: any) {
-          errors.push(`USD (Blue) API Fetch Error (${formattedDateForApi}): ${error.message || 'Network error'}`);
+          errors.push(`USD (Blue) API Fetch Error (${formattedDateForUsdApi}): ${error.message || 'Network error'}`);
       }
 
-      // Fetch USD Oficial data from Argentinadatos API
+      // Fetch USD Oficial data
       try {
-        const usdOficialResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial/${formattedDateForApi}`);
+        const usdOficialResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial/${formattedDateForUsdApi}`);
         if (usdOficialResponse.ok) {
           const data = await usdOficialResponse.json();
           if (data && typeof data.compra === 'number' && typeof data.venta === 'number') {
             usdOficialValues = { compra: data.compra, venta: data.venta };
           } else {
-            errors.push(`USD (Oficial) data for ${formattedDateForApi} not found or compra/venta fields missing/invalid.`);
+            errors.push(`USD (Oficial) data for ${formattedDateForUsdApi} not found or compra/venta fields missing/invalid.`);
           }
         } else {
-          let errorMsg = `USD (Oficial) API (${formattedDateForApi}): ${usdOficialResponse.status} ${usdOficialResponse.statusText || 'Failed to fetch'}`;
-          try { const errorJson = await usdOficialResponse.json(); if (errorJson.error) errorMsg = `USD (Oficial) API Error (${formattedDateForApi}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Oficial) API Error (${formattedDateForApi}): ${errorJson.message}`;} catch {}
+          let errorMsg = `USD (Oficial) API (${formattedDateForUsdApi}): ${usdOficialResponse.status} ${usdOficialResponse.statusText || 'Failed to fetch'}`;
+          try { const errorJson = await usdOficialResponse.json(); if (errorJson.error) errorMsg = `USD (Oficial) API Error (${formattedDateForUsdApi}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Oficial) API Error (${formattedDateForUsdApi}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
       } catch (error: any) {
-          errors.push(`USD (Oficial) API Fetch Error (${formattedDateForApi}): ${error.message || 'Network error'}`);
+          errors.push(`USD (Oficial) API Fetch Error (${formattedDateForUsdApi}): ${error.message || 'Network error'}`);
       }
       
-      // Fetch EUR data from DolarAPI (Latest Official Euro)
+      // Fetch EUR data
       try {
-        const eurResponse = await fetch(`https://dolarapi.com/v1/cotizaciones/eur`);
+        const eurResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/eur/${year}/${month}/${day}`);
         if (eurResponse.ok) {
-          const eurData = await eurResponse.json();
-          if (eurData && typeof eurData.venta === 'number') {
-            eurValue = eurData.venta;
-            eurApiUpdateTime = eurData.fechaActualizacion; 
+          const data = await eurResponse.json();
+          if (data && typeof data.compra === 'number' && typeof data.venta === 'number') {
+            eurValues = { compra: data.compra, venta: data.venta };
           } else {
-            errors.push("EUR data not found or 'venta' field missing/invalid in DolarAPI response.");
+            errors.push(`EUR data for ${year}/${month}/${day} not found or compra/venta fields missing/invalid.`);
           }
         } else {
-          let errorMsg = `EUR API: ${eurResponse.status} ${eurResponse.statusText || 'Failed to fetch'}`;
-          try { const errorJson = await eurResponse.json(); if (errorJson.message) errorMsg = `EUR API Error: ${errorJson.message}`; } catch {}
+          let errorMsg = `EUR API (${year}/${month}/${day}): ${eurResponse.status} ${eurResponse.statusText || 'Failed to fetch'}`;
+          try { const errorJson = await eurResponse.json(); if (errorJson.error) errorMsg = `EUR API Error (${year}/${month}/${day}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `EUR API Error (${year}/${month}/${day}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
       } catch (error: any) {
-          errors.push(`EUR API Fetch Error: ${error.message || 'Network error or API unavailable'}`);
+          errors.push(`EUR API Fetch Error (${year}/${month}/${day}): ${error.message || 'Network error'}`);
       }
 
-      if (errors.length > 0 && !usdBlueValues && !usdOficialValues && !eurValue) {
+      if (errors.length > 0 && !usdBlueValues && !usdOficialValues && !eurValues) {
          toast({
           title: "API Errors",
           description: (
@@ -140,9 +141,8 @@ export default function PesoWatcherPage() {
       const newCurrencyData: CurrencyData = {
         USD_BLUE: usdBlueValues,
         USD_OFICIAL: usdOficialValues,
-        EUR: eurValue,
-        quoteDate: (usdBlueValues || usdOficialValues) ? formattedDateForApi : null,
-        eurLatestUpdate: eurApiUpdateTime,
+        EUR: eurValues,
+        quoteDate: (usdBlueValues || usdOficialValues || eurValues) ? formattedDateForUsdApi : null,
       };
       setCurrencyData(newCurrencyData);
 
@@ -190,17 +190,24 @@ export default function PesoWatcherPage() {
           ) : <p className="flex items-center text-muted-foreground"><DollarSign className="w-5 h-5 mr-2" /> USD (Oficial) data not available for {displayDate}.</p>}
 
           {/* EUR */}
-          {newCurrencyData.EUR !== null && newCurrencyData.eurLatestUpdate ? (
+          {newCurrencyData.EUR && newCurrencyData.quoteDate ? (
             <div>
               <p className="flex items-center text-lg font-semibold text-primary mb-1">
                 <Euro className="w-5 h-5 mr-2 text-primary" /> 
-                EUR (Official) - Latest:
+                EUR (Official) for {displayDate}:
               </p>
-              <p className="ml-7 text-md">Venta: <span className="font-medium">{newCurrencyData.EUR.toFixed(2)} ARS</span>
-                <span className="text-xs ml-1 text-muted-foreground">(as of {format(parseISO(newCurrencyData.eurLatestUpdate), 'HH:mm')})</span>
-              </p>
+              {newCurrencyData.EUR.compra !== null && (
+                <p className="ml-7 text-md">Compra: <span className="font-medium">{newCurrencyData.EUR.compra.toFixed(2)} ARS</span></p>
+              )}
+              {newCurrencyData.EUR.venta !== null && (
+                <p className="ml-7 text-md">Venta: <span className="font-medium">{newCurrencyData.EUR.venta.toFixed(2)} ARS</span></p>
+              )}
+              {(newCurrencyData.EUR.compra === null && newCurrencyData.EUR.venta === null) && (
+                 <p className="ml-7 text-sm text-muted-foreground">No data available for EUR (Official) on this date.</p>
+              )}
             </div>
-          ) : <p className="flex items-center text-muted-foreground"><Euro className="w-5 h-5 mr-2" /> EUR (Official) latest data not available.</p>}
+          ) : <p className="flex items-center text-muted-foreground"><Euro className="w-5 h-5 mr-2" /> EUR (Official) data not available for {displayDate}.</p>}
+
 
           {errors.length > 0 && (
               <div className="mt-4 pt-3 border-t border-border">
@@ -229,7 +236,7 @@ export default function PesoWatcherPage() {
         description: <p className="text-destructive font-medium">{error.message || "An unexpected critical error occurred."}</p>
       });
       setIsModalOpen(true);
-      setCurrencyData({ USD_BLUE: null, USD_OFICIAL: null, EUR: null, quoteDate: null, eurLatestUpdate: null }); 
+      setCurrencyData({ USD_BLUE: null, USD_OFICIAL: null, EUR: null, quoteDate: null }); 
     } finally {
       setIsLoading(false);
     }
@@ -274,7 +281,7 @@ export default function PesoWatcherPage() {
         <header className="mb-8 sm:mb-12 text-center">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary">Peso Watcher</h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 max-w-lg mx-auto">
-            View US Dollar (Blue & Oficial - Compra/Venta) for selected date & latest Euro (Official) value in Argentinian Pesos (ARS).
+            View US Dollar (Blue & Oficial - Compra/Venta) and Euro (Official - Compra/Venta) for selected date in Argentinian Pesos (ARS).
           </p>
         </header>
 
@@ -282,7 +289,7 @@ export default function PesoWatcherPage() {
           <Card className="shadow-lg rounded-xl overflow-hidden border-border">
             <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
               <CardTitle className="flex items-center text-lg sm:text-xl">
-                <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Select Date for USD Rates
+                <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Select Date for Rates
               </CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center p-2 sm:p-4">
@@ -294,7 +301,7 @@ export default function PesoWatcherPage() {
                 disabled={(date) => date > new Date() || date < new Date("2000-01-01")} 
                 footer={
                   <p className="text-xs sm:text-sm text-center text-muted-foreground mt-2 p-1">
-                    {selectedDate ? `Selected: ${format(selectedDate, 'PPP')}` : "Pick a day for USD rates."}
+                    {selectedDate ? `Selected: ${format(selectedDate, 'PPP')}` : "Pick a day for exchange rates."}
                   </p>
                 }
               />
@@ -363,13 +370,18 @@ export default function PesoWatcherPage() {
                   )}
                   
                   {/* EUR in Card */}
-                  {currencyData.eurLatestUpdate && currencyData.EUR !== null ? (
-                    <p>
-                      <span className="font-medium text-card-foreground">EUR (Official) - Latest</span> <span className="text-xs">(as of {format(parseISO(currencyData.eurLatestUpdate), 'HH:mm')})</span>:
-                      <span className="font-bold text-card-foreground"> {currencyData.EUR.toFixed(2)} ARS</span>
-                    </p>
+                  {currencyData.EUR ? (
+                     <div>
+                      <span className="font-medium text-card-foreground">EUR (Official):</span>
+                      {currencyData.EUR.compra !== null ? (
+                        <span> C: <span className="font-bold text-card-foreground">{currencyData.EUR.compra.toFixed(2)}</span></span>
+                      ) : <span className="text-xs"> C: N/A</span>}
+                      {currencyData.EUR.venta !== null ? (
+                        <span> V: <span className="font-bold text-card-foreground">{currencyData.EUR.venta.toFixed(2)} ARS</span></span>
+                      ) : <span className="text-xs"> V: N/A ARS</span>}
+                    </div>
                   ) : (
-                     <p>EUR (Official) latest data is unavailable.</p>
+                     <p>EUR (Official) data unavailable for {displayDateInCard}.</p>
                   )}
 
                    {!isModalOpen && (currencyData.USD_BLUE || currencyData.USD_OFICIAL || currencyData.EUR) && (
