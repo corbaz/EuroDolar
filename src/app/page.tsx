@@ -18,10 +18,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 
+interface UsdQuote {
+  compra: number | null;
+  venta: number | null;
+}
+
 interface CurrencyData {
-  USD: number | null;
+  USD_BLUE: UsdQuote | null;
+  USD_OFICIAL: UsdQuote | null;
   EUR: number | null;
-  usdQuoteDate: string | null; // Date for which USD quote is (YYYY-MM-DD from selectedDate)
+  quoteDate: string | null; // Date for which USD quotes are (YYYY-MM-DD from selectedDate)
   eurLatestUpdate: string | null; // Timestamp of latest EUR quote from its API
 }
 
@@ -53,33 +59,49 @@ export default function PesoWatcherPage() {
       setIsLoading(true);
       setCurrencyData(null);
 
-      const formattedDateForUsdApi = format(selectedDate, 'yyyy-MM-dd');
-      let usdValue: number | null = null;
+      const formattedDateForApi = format(selectedDate, 'yyyy-MM-dd');
+      let usdBlueValues: UsdQuote | null = null;
+      let usdOficialValues: UsdQuote | null = null;
       let eurValue: number | null = null;
       let eurApiUpdateTime: string | null = null;
       const errors: string[] = [];
 
-      // Fetch USD data from Argentinadatos API for the selected date (Blue Dollar)
+      // Fetch USD Blue data from Argentinadatos API
       try {
-        const usdResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/blue/${formattedDateForUsdApi}`);
-        if (usdResponse.ok) {
-          const usdData = await usdResponse.json();
-          if (usdData && typeof usdData.venta === 'number') {
-            usdValue = usdData.venta;
+        const usdBlueResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/blue/${formattedDateForApi}`);
+        if (usdBlueResponse.ok) {
+          const data = await usdBlueResponse.json();
+          if (data && typeof data.compra === 'number' && typeof data.venta === 'number') {
+            usdBlueValues = { compra: data.compra, venta: data.venta };
           } else {
-            errors.push(`USD (Blue) data for ${formattedDateForUsdApi} not found or 'venta' field missing/invalid in Argentinadatos response.`);
+            errors.push(`USD (Blue) data for ${formattedDateForApi} not found or compra/venta fields missing/invalid.`);
           }
         } else {
-          let errorMsg = `USD API (${formattedDateForUsdApi}): ${usdResponse.status} ${usdResponse.statusText || 'Failed to fetch'}`;
-          try { 
-            const errorJson = await usdResponse.json(); 
-            if (errorJson.error) errorMsg = `USD API Error (${formattedDateForUsdApi}): ${errorJson.error}`; 
-            else if (errorJson.message) errorMsg = `USD API Error (${formattedDateForUsdApi}): ${errorJson.message}`;
-          } catch {}
+          let errorMsg = `USD (Blue) API (${formattedDateForApi}): ${usdBlueResponse.status} ${usdBlueResponse.statusText || 'Failed to fetch'}`;
+          try { const errorJson = await usdBlueResponse.json(); if (errorJson.error) errorMsg = `USD (Blue) API Error (${formattedDateForApi}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Blue) API Error (${formattedDateForApi}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
       } catch (error: any) {
-          errors.push(`USD API Fetch Error (${formattedDateForUsdApi}): ${error.message || 'Network error or API unavailable'}`);
+          errors.push(`USD (Blue) API Fetch Error (${formattedDateForApi}): ${error.message || 'Network error'}`);
+      }
+
+      // Fetch USD Oficial data from Argentinadatos API
+      try {
+        const usdOficialResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial/${formattedDateForApi}`);
+        if (usdOficialResponse.ok) {
+          const data = await usdOficialResponse.json();
+          if (data && typeof data.compra === 'number' && typeof data.venta === 'number') {
+            usdOficialValues = { compra: data.compra, venta: data.venta };
+          } else {
+            errors.push(`USD (Oficial) data for ${formattedDateForApi} not found or compra/venta fields missing/invalid.`);
+          }
+        } else {
+          let errorMsg = `USD (Oficial) API (${formattedDateForApi}): ${usdOficialResponse.status} ${usdOficialResponse.statusText || 'Failed to fetch'}`;
+          try { const errorJson = await usdOficialResponse.json(); if (errorJson.error) errorMsg = `USD (Oficial) API Error (${formattedDateForApi}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Oficial) API Error (${formattedDateForApi}): ${errorJson.message}`;} catch {}
+          errors.push(errorMsg);
+        }
+      } catch (error: any) {
+          errors.push(`USD (Oficial) API Fetch Error (${formattedDateForApi}): ${error.message || 'Network error'}`);
       }
       
       // Fetch EUR data from DolarAPI (Latest Official Euro)
@@ -89,7 +111,7 @@ export default function PesoWatcherPage() {
           const eurData = await eurResponse.json();
           if (eurData && typeof eurData.venta === 'number') {
             eurValue = eurData.venta;
-            eurApiUpdateTime = eurData.fechaActualizacion; // This is an ISO string
+            eurApiUpdateTime = eurData.fechaActualizacion; 
           } else {
             errors.push("EUR data not found or 'venta' field missing/invalid in DolarAPI response.");
           }
@@ -102,46 +124,83 @@ export default function PesoWatcherPage() {
           errors.push(`EUR API Fetch Error: ${error.message || 'Network error or API unavailable'}`);
       }
 
-      if (errors.length > 0 && usdValue === null && eurValue === null) {
+      if (errors.length > 0 && !usdBlueValues && !usdOficialValues && !eurValue) {
          toast({
           title: "API Errors",
           description: (
               <div className="max-h-40 overflow-y-auto">
                   {errors.map((e, i) => <p key={i}>{e}</p>)}
               </div>
-          ), // Fixed: Added comma here
+          ),
           variant: "destructive",
           duration: 5000,
         });
       }
       
       const newCurrencyData: CurrencyData = {
-        USD: usdValue,
+        USD_BLUE: usdBlueValues,
+        USD_OFICIAL: usdOficialValues,
         EUR: eurValue,
-        usdQuoteDate: usdValue !== null ? formattedDateForUsdApi : null,
+        quoteDate: (usdBlueValues || usdOficialValues) ? formattedDateForApi : null,
         eurLatestUpdate: eurApiUpdateTime,
       };
       setCurrencyData(newCurrencyData);
 
       const modalTitle = "Currency Exchange Rates";
+      const displayDate = newCurrencyData.quoteDate ? format(parse(newCurrencyData.quoteDate, 'yyyy-MM-dd', new Date()), 'MMM d, yyyy') : format(selectedDate, 'MMM d, yyyy');
+      
       const modalDescription = (
-        <div className="space-y-3">
-          {newCurrencyData.USD !== null && newCurrencyData.usdQuoteDate ? (
-            <p className="flex items-center text-lg">
-              <DollarSign className="w-6 h-6 mr-2.5 text-primary" /> 
-              <span className="font-semibold">USD (Blue) for {format(parse(newCurrencyData.usdQuoteDate, 'yyyy-MM-dd', new Date()), 'MMM d, yyyy')}:</span>
-              &nbsp;{newCurrencyData.USD.toFixed(2)} ARS
-            </p>
-          ) : <p className="flex items-center text-muted-foreground"><DollarSign className="w-6 h-6 mr-2.5" /> USD (Blue) data not available for {format(selectedDate, 'MMM d, yyyy')}.</p>}
+        <div className="space-y-4">
+          {/* USD Blue */}
+          {newCurrencyData.USD_BLUE && newCurrencyData.quoteDate ? (
+            <div>
+              <p className="flex items-center text-lg font-semibold text-primary mb-1">
+                <DollarSign className="w-5 h-5 mr-2 text-primary" /> 
+                USD (Blue) for {displayDate}:
+              </p>
+              {newCurrencyData.USD_BLUE.compra !== null && (
+                <p className="ml-7 text-md">Compra: <span className="font-medium">{newCurrencyData.USD_BLUE.compra.toFixed(2)} ARS</span></p>
+              )}
+              {newCurrencyData.USD_BLUE.venta !== null && (
+                <p className="ml-7 text-md">Venta: <span className="font-medium">{newCurrencyData.USD_BLUE.venta.toFixed(2)} ARS</span></p>
+              )}
+               {(newCurrencyData.USD_BLUE.compra === null && newCurrencyData.USD_BLUE.venta === null) && (
+                <p className="ml-7 text-sm text-muted-foreground">No data available for USD (Blue) on this date.</p>
+              )}
+            </div>
+          ) : <p className="flex items-center text-muted-foreground"><DollarSign className="w-5 h-5 mr-2" /> USD (Blue) data not available for {displayDate}.</p>}
           
+          {/* USD Oficial */}
+          {newCurrencyData.USD_OFICIAL && newCurrencyData.quoteDate ? (
+            <div>
+              <p className="flex items-center text-lg font-semibold text-primary mb-1">
+                <DollarSign className="w-5 h-5 mr-2 text-primary" /> 
+                USD (Oficial) for {displayDate}:
+              </p>
+               {newCurrencyData.USD_OFICIAL.compra !== null && (
+                <p className="ml-7 text-md">Compra: <span className="font-medium">{newCurrencyData.USD_OFICIAL.compra.toFixed(2)} ARS</span></p>
+              )}
+              {newCurrencyData.USD_OFICIAL.venta !== null && (
+                <p className="ml-7 text-md">Venta: <span className="font-medium">{newCurrencyData.USD_OFICIAL.venta.toFixed(2)} ARS</span></p>
+              )}
+              {(newCurrencyData.USD_OFICIAL.compra === null && newCurrencyData.USD_OFICIAL.venta === null) && (
+                <p className="ml-7 text-sm text-muted-foreground">No data available for USD (Oficial) on this date.</p>
+              )}
+            </div>
+          ) : <p className="flex items-center text-muted-foreground"><DollarSign className="w-5 h-5 mr-2" /> USD (Oficial) data not available for {displayDate}.</p>}
+
+          {/* EUR */}
           {newCurrencyData.EUR !== null && newCurrencyData.eurLatestUpdate ? (
-            <p className="flex items-center text-lg">
-              <Euro className="w-6 h-6 mr-2.5 text-primary" /> 
-              <span className="font-semibold">EUR (Official) - Latest:</span>
-              &nbsp;{newCurrencyData.EUR.toFixed(2)} ARS 
-              <span className="text-xs ml-1 text-muted-foreground">(as of {format(parseISO(newCurrencyData.eurLatestUpdate), 'HH:mm')})</span>
-            </p>
-          ) : <p className="flex items-center text-muted-foreground"><Euro className="w-6 h-6 mr-2.5" /> EUR (Official) latest data not available.</p>}
+            <div>
+              <p className="flex items-center text-lg font-semibold text-primary mb-1">
+                <Euro className="w-5 h-5 mr-2 text-primary" /> 
+                EUR (Official) - Latest:
+              </p>
+              <p className="ml-7 text-md">Venta: <span className="font-medium">{newCurrencyData.EUR.toFixed(2)} ARS</span>
+                <span className="text-xs ml-1 text-muted-foreground">(as of {format(parseISO(newCurrencyData.eurLatestUpdate), 'HH:mm')})</span>
+              </p>
+            </div>
+          ) : <p className="flex items-center text-muted-foreground"><Euro className="w-5 h-5 mr-2" /> EUR (Official) latest data not available.</p>}
 
           {errors.length > 0 && (
               <div className="mt-4 pt-3 border-t border-border">
@@ -151,7 +210,7 @@ export default function PesoWatcherPage() {
                   </ul>
               </div>
           )}
-          {newCurrencyData.USD === null && newCurrencyData.EUR === null && errors.length === 0 && (
+          {!newCurrencyData.USD_BLUE && !newCurrencyData.USD_OFICIAL && !newCurrencyData.EUR && errors.length === 0 && (
                <p className="text-destructive font-medium">No exchange rate data found for the selected criteria.</p>
           )}
         </div>
@@ -163,14 +222,14 @@ export default function PesoWatcherPage() {
       });
       setIsModalOpen(true);
 
-    } catch (error: any) { // Catch for the entire fetchCurrencyData logic, though individual fetches have their own try/catch
+    } catch (error: any) { 
       console.error("Critical error in fetchCurrencyData:", error);
       setModalContent({
         title: "Critical Error",
         description: <p className="text-destructive font-medium">{error.message || "An unexpected critical error occurred."}</p>
       });
       setIsModalOpen(true);
-      setCurrencyData({ USD: null, EUR: null, usdQuoteDate: null, eurLatestUpdate: null }); 
+      setCurrencyData({ USD_BLUE: null, USD_OFICIAL: null, EUR: null, quoteDate: null, eurLatestUpdate: null }); 
     } finally {
       setIsLoading(false);
     }
@@ -206,14 +265,16 @@ export default function PesoWatcherPage() {
         toast({ title: "Select a Date", description: "Please select a date first to refresh.", variant: "default"});
     }
   };
+  
+  const displayDateInCard = currencyData?.quoteDate ? format(parse(currencyData.quoteDate, 'yyyy-MM-dd', new Date()), 'PPP') : (selectedDate ? format(selectedDate, 'PPP') : 'selected date');
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <main className="container mx-auto p-4 sm:p-6 md:p-8 flex flex-col items-center flex-grow">
         <header className="mb-8 sm:mb-12 text-center">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary">Peso Watcher</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 max-w-md mx-auto">
-            View US Dollar (Blue) for selected date & latest Euro (Official) values in Argentinian Pesos (ARS).
+          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 max-w-lg mx-auto">
+            View US Dollar (Blue & Oficial - Compra/Venta) for selected date & latest Euro (Official) value in Argentinian Pesos (ARS).
           </p>
         </header>
 
@@ -221,7 +282,7 @@ export default function PesoWatcherPage() {
           <Card className="shadow-lg rounded-xl overflow-hidden border-border">
             <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
               <CardTitle className="flex items-center text-lg sm:text-xl">
-                <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Select Date for USD Rate
+                <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Select Date for USD Rates
               </CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center p-2 sm:p-4">
@@ -233,7 +294,7 @@ export default function PesoWatcherPage() {
                 disabled={(date) => date > new Date() || date < new Date("2000-01-01")} 
                 footer={
                   <p className="text-xs sm:text-sm text-center text-muted-foreground mt-2 p-1">
-                    {selectedDate ? `Selected: ${format(selectedDate, 'PPP')}` : "Pick a day for USD rate."}
+                    {selectedDate ? `Selected: ${format(selectedDate, 'PPP')}` : "Pick a day for USD rates."}
                   </p>
                 }
               />
@@ -259,7 +320,7 @@ export default function PesoWatcherPage() {
                 </Button>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 space-y-2 text-left min-h-[120px] flex flex-col justify-center">
+            <CardContent className="p-4 sm:p-6 space-y-3 text-left min-h-[180px] flex flex-col justify-center">
               {isLoading && (
                 <div className="flex flex-col items-center justify-center">
                   <RefreshCw className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary mb-2" />
@@ -267,29 +328,56 @@ export default function PesoWatcherPage() {
                 </div>
               )}
               {!isLoading && currencyData && (
-                <div className="text-sm sm:text-base text-muted-foreground">
-                  {currencyData.usdQuoteDate && currencyData.USD !== null ? (
-                    <p>
-                      USD (Blue) for <span className="font-semibold text-card-foreground">{format(parse(currencyData.usdQuoteDate, 'yyyy-MM-dd', new Date()), 'PPP')}</span>: 
-                      <span className="font-bold text-card-foreground"> {currencyData.USD.toFixed(2)} ARS</span>
-                    </p>
-                  ) : (
-                    <p>USD (Blue) data for {selectedDate ? format(selectedDate, 'PPP') : 'selected date'} is unavailable.</p>
+                <div className="text-xs sm:text-sm text-muted-foreground space-y-2">
+                  {currencyData.quoteDate && (
+                    <p className="font-semibold text-card-foreground mb-1">Rates for: {displayDateInCard}</p>
                   )}
+                  {/* USD Blue in Card */}
+                  {currencyData.USD_BLUE ? (
+                    <div>
+                      <span className="font-medium text-card-foreground">USD (Blue):</span>
+                      {currencyData.USD_BLUE.compra !== null ? (
+                        <span> C: <span className="font-bold text-card-foreground">{currencyData.USD_BLUE.compra.toFixed(2)}</span></span>
+                      ) : <span className="text-xs"> C: N/A</span>}
+                      {currencyData.USD_BLUE.venta !== null ? (
+                        <span> V: <span className="font-bold text-card-foreground">{currencyData.USD_BLUE.venta.toFixed(2)} ARS</span></span>
+                      ) : <span className="text-xs"> V: N/A ARS</span>}
+                    </div>
+                  ) : (
+                    <p>USD (Blue) data unavailable for {displayDateInCard}.</p>
+                  )}
+
+                  {/* USD Oficial in Card */}
+                  {currencyData.USD_OFICIAL ? (
+                     <div>
+                      <span className="font-medium text-card-foreground">USD (Oficial):</span>
+                      {currencyData.USD_OFICIAL.compra !== null ? (
+                        <span> C: <span className="font-bold text-card-foreground">{currencyData.USD_OFICIAL.compra.toFixed(2)}</span></span>
+                      ) : <span className="text-xs"> C: N/A</span>}
+                      {currencyData.USD_OFICIAL.venta !== null ? (
+                        <span> V: <span className="font-bold text-card-foreground">{currencyData.USD_OFICIAL.venta.toFixed(2)} ARS</span></span>
+                      ) : <span className="text-xs"> V: N/A ARS</span>}
+                    </div>
+                  ) : (
+                    <p>USD (Oficial) data unavailable for {displayDateInCard}.</p>
+                  )}
+                  
+                  {/* EUR in Card */}
                   {currencyData.eurLatestUpdate && currencyData.EUR !== null ? (
                     <p>
-                      EUR (Official) - Latest <span className="text-xs">(as of {format(parseISO(currencyData.eurLatestUpdate), 'HH:mm')})</span>:
+                      <span className="font-medium text-card-foreground">EUR (Official) - Latest</span> <span className="text-xs">(as of {format(parseISO(currencyData.eurLatestUpdate), 'HH:mm')})</span>:
                       <span className="font-bold text-card-foreground"> {currencyData.EUR.toFixed(2)} ARS</span>
                     </p>
                   ) : (
                      <p>EUR (Official) latest data is unavailable.</p>
                   )}
-                   {!isModalOpen && (currencyData.USD !== null || currencyData.EUR !== null) && (
-                        <Button onClick={() => setIsModalOpen(true)} variant="link" className="text-primary p-0 h-auto mt-2 text-sm sm:text-base">
-                          Show Details in Modal
+
+                   {!isModalOpen && (currencyData.USD_BLUE || currencyData.USD_OFICIAL || currencyData.EUR) && (
+                        <Button onClick={() => setIsModalOpen(true)} variant="link" className="text-primary p-0 h-auto mt-2 text-xs sm:text-sm">
+                          Show Full Details
                         </Button>
                     )}
-                    {(currencyData.USD === null && currencyData.EUR === null) && (
+                    {(!currencyData.USD_BLUE && !currencyData.USD_OFICIAL && !currencyData.EUR) && (
                         <p className="mt-2">No exchange rate data currently available for the selected criteria.</p>
                     )}
                 </div>
