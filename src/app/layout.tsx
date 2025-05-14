@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Peso Watcher | ARS Currency Tracker',
-  description: 'Track historical USD and EUR exchange rates against Argentinian Peso (ARS). Select a date to view currency values.',
+  description: 'Track the latest USD and EUR exchange rates against Argentinian Peso (ARS). View current currency values.',
 };
 
 export default function RootLayout({

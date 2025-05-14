@@ -22,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 interface CurrencyData {
   USD: number | null;
   EUR: number | null;
-  apiDate: string | null; 
+  apiDate: string | null; // Will store ISO string from API's 'fechaActualizacion'
 }
 
 interface ModalContent {
@@ -38,67 +38,90 @@ export default function PesoWatcherPage() {
   const [modalContent, setModalContent] = useState<ModalContent | null>(null);
   const { toast } = useToast();
 
-  const fetchCurrencyData = useCallback(async (date: Date) => {
+  const fetchCurrencyData = useCallback(async () => {
     setIsLoading(true);
     setCurrencyData(null); 
 
-    const formattedDate = format(date, 'yyyy-MM-dd');
-
     try {
-      let usdDataResponse, eurDataResponse;
+      let usdValue: number | null = null;
+      let eurValue: number | null = null;
+      let usdApiUpdateTime: string | null = null;
+      let eurApiUpdateTime: string | null = null;
       const errors: string[] = [];
 
-      // Fetch USD data
-      const usdResponse = await fetch(`https://api.frankfurter.app/${formattedDate}?from=USD&to=ARS`);
+      // Fetch USD data from DolarAPI (Blue Dollar)
+      const usdResponse = await fetch(`https://dolarapi.com/v1/dolares`);
       if (usdResponse.ok) {
-        usdDataResponse = await usdResponse.json();
+        const usdDataArray = await usdResponse.json();
+        const blueUsd = usdDataArray.find((d: any) => d.casa === 'blue');
+        if (blueUsd && typeof blueUsd.venta === 'number') {
+          usdValue = blueUsd.venta;
+          usdApiUpdateTime = blueUsd.fechaActualizacion;
+        } else {
+          errors.push("USD (Blue) data not found or 'venta' field missing/invalid in DolarAPI response.");
+        }
       } else {
-        let errorMsg = `USD: ${usdResponse.status} ${usdResponse.statusText || 'Failed to fetch'}`;
-        try { const errorJson = await usdResponse.json(); if (errorJson.message) errorMsg = `USD: ${errorJson.message}`; } catch {}
+        let errorMsg = `USD API: ${usdResponse.status} ${usdResponse.statusText || 'Failed to fetch'}`;
+        try { const errorJson = await usdResponse.json(); if (errorJson.message) errorMsg = `USD API Error: ${errorJson.message}`; } catch {}
         errors.push(errorMsg);
       }
       
-      // Fetch EUR data
-      const eurResponse = await fetch(`https://api.frankfurter.app/${formattedDate}?from=EUR&to=ARS`);
+      // Fetch EUR data from DolarAPI (Official Euro as per provided link)
+      const eurResponse = await fetch(`https://dolarapi.com/v1/cotizaciones/eur`);
       if (eurResponse.ok) {
-        eurDataResponse = await eurResponse.json();
+        const eurData = await eurResponse.json();
+        if (eurData && typeof eurData.venta === 'number') {
+          eurValue = eurData.venta;
+          eurApiUpdateTime = eurData.fechaActualizacion;
+        } else {
+          errors.push("EUR data not found or 'venta' field missing/invalid in DolarAPI response.");
+        }
       } else {
-        let errorMsg = `EUR: ${eurResponse.status} ${eurResponse.statusText || 'Failed to fetch'}`;
-        try { const errorJson = await eurResponse.json(); if (errorJson.message) errorMsg = `EUR: ${errorJson.message}`; } catch {}
+        let errorMsg = `EUR API: ${eurResponse.status} ${eurResponse.statusText || 'Failed to fetch'}`;
+        try { const errorJson = await eurResponse.json(); if (errorJson.message) errorMsg = `EUR API Error: ${errorJson.message}`; } catch {}
         errors.push(errorMsg);
       }
 
-      if (errors.length > 0 && (!usdDataResponse?.rates?.ARS && !eurDataResponse?.rates?.ARS)) {
+      if (errors.length > 0 && usdValue === null && eurValue === null) {
         throw new Error(`API Error(s): ${errors.join('; ')}`);
       }
       
+      let finalApiDate: string | null = null;
+      if (usdApiUpdateTime && eurApiUpdateTime) {
+        finalApiDate = new Date(usdApiUpdateTime) > new Date(eurApiUpdateTime) ? usdApiUpdateTime : eurApiUpdateTime;
+      } else {
+        finalApiDate = usdApiUpdateTime || eurApiUpdateTime;
+      }
+
       const newCurrencyData: CurrencyData = {
-        USD: usdDataResponse?.rates?.ARS ?? null,
-        EUR: eurDataResponse?.rates?.ARS ?? null,
-        apiDate: usdDataResponse?.date || eurDataResponse?.date || formattedDate,
+        USD: usdValue,
+        EUR: eurValue,
+        apiDate: finalApiDate,
       };
       setCurrencyData(newCurrencyData);
 
-      const displayDate = newCurrencyData.apiDate ? format(parseISO(newCurrencyData.apiDate), 'PPP') : format(date, 'PPP');
+      const modalTitleDateString = newCurrencyData.apiDate 
+          ? `Latest Rates (as of ${format(parseISO(newCurrencyData.apiDate), 'MMM d, yyyy HH:mm')})`
+          : "Latest Available Rates";
 
       setModalContent({
-        title: `Rates for ${displayDate}`,
+        title: modalTitleDateString,
         description: (
           <div className="space-y-3">
             {newCurrencyData.USD !== null ? (
               <p className="flex items-center text-lg">
                 <DollarSign className="w-6 h-6 mr-2.5 text-primary" /> 
-                <span className="font-semibold">USD:</span>&nbsp;{newCurrencyData.USD.toFixed(2)} ARS
+                <span className="font-semibold">USD (Blue):</span>&nbsp;{newCurrencyData.USD.toFixed(2)} ARS
               </p>
-            ) : <p className="flex items-center text-muted-foreground"><DollarSign className="w-6 h-6 mr-2.5" /> USD data not available.</p>}
+            ) : <p className="flex items-center text-muted-foreground"><DollarSign className="w-6 h-6 mr-2.5" /> USD (Blue) data not available.</p>}
             {newCurrencyData.EUR !== null ? (
               <p className="flex items-center text-lg">
                 <Euro className="w-6 h-6 mr-2.5 text-primary" /> 
-                <span className="font-semibold">EUR:</span>&nbsp;{newCurrencyData.EUR.toFixed(2)} ARS
+                <span className="font-semibold">EUR (Official):</span>&nbsp;{newCurrencyData.EUR.toFixed(2)} ARS
               </p>
-            ) : <p className="flex items-center text-muted-foreground"><Euro className="w-6 h-6 mr-2.5" /> EUR data not available.</p>}
+            ) : <p className="flex items-center text-muted-foreground"><Euro className="w-6 h-6 mr-2.5" /> EUR (Official) data not available.</p>}
             {newCurrencyData.USD === null && newCurrencyData.EUR === null && (
-                 <p className="text-destructive font-medium">No exchange rate data found for this date.</p>
+                 <p className="text-destructive font-medium">No exchange rate data found from DolarAPI.</p>
             )}
           </div>
         )
@@ -106,53 +129,41 @@ export default function PesoWatcherPage() {
       setIsModalOpen(true);
 
     } catch (error: any) {
-      console.error("Error fetching currency data:", error);
-      const displayDate = format(date, 'PPP');
+      console.error("Error fetching currency data from DolarAPI:", error);
       setModalContent({
-        title: `Error for ${displayDate}`,
-        description: <p className="text-destructive font-medium">{error.message || "An unknown error occurred while fetching data."}</p>
+        title: "Error Fetching Latest Rates",
+        description: <p className="text-destructive font-medium">{error.message || "An unknown error occurred while fetching data from DolarAPI."}</p>
       });
       setIsModalOpen(true);
-      setCurrencyData({ USD: null, EUR: null, apiDate: formattedDate }); 
+      setCurrencyData({ USD: null, EUR: null, apiDate: null }); 
     } finally {
       setIsLoading(false);
     }
-  }, [toast]); // toast is stable, so it doesn't need to be in deps if it's from useToast
+  }, [toast]);
 
   useEffect(() => {
     if (selectedDate) {
-      fetchCurrencyData(selectedDate);
+      fetchCurrencyData();
     }
   }, [selectedDate, fetchCurrencyData]);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
-      // Prevent fetching for future dates client-side
       if (date > new Date()) {
         toast({
           title: "Invalid Date",
-          description: "Cannot fetch exchange rates for future dates. Please select a past or current date.",
+          description: "Cannot select future dates. Showing latest rates.",
           variant: "destructive",
           duration: 3000,
         });
-        // Optionally, reset selectedDate or keep the old one
-        // setSelectedDate(new Date()); // Or keep previous valid date
         return;
       }
-      setSelectedDate(date);
+      setSelectedDate(date); // This will trigger useEffect, which calls fetchCurrencyData
     }
   };
 
   const handleRefresh = () => {
-    if (selectedDate) {
-      fetchCurrencyData(selectedDate);
-    } else {
-      toast({
-        title: "No Date Selected",
-        description: "Please select a date to refresh data.",
-        duration: 3000,
-      });
-    }
+    fetchCurrencyData(); // Always fetch latest data on refresh
   };
 
   return (
@@ -161,7 +172,7 @@ export default function PesoWatcherPage() {
         <header className="mb-8 sm:mb-12 text-center">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary">Peso Watcher</h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 max-w-md mx-auto">
-            Select a date to check historical US Dollar & Euro values in Argentinian Pesos (ARS).
+            View the latest US Dollar & Euro values in Argentinian Pesos (ARS). Data is updated when you select a date or refresh.
           </p>
         </header>
 
@@ -169,7 +180,7 @@ export default function PesoWatcherPage() {
           <Card className="shadow-lg rounded-xl overflow-hidden border-border">
             <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
               <CardTitle className="flex items-center text-lg sm:text-xl">
-                <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Select Date
+                <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Select Date to Refresh
               </CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center p-2 sm:p-4">
@@ -178,10 +189,10 @@ export default function PesoWatcherPage() {
                 selected={selectedDate}
                 onSelect={handleDateSelect}
                 className="rounded-md border shadow-sm bg-card"
-                disabled={(date) => date > new Date() || date < new Date("2000-01-01")} // Frankfurter typical historical range
+                disabled={(date) => date > new Date() || date < new Date("2000-01-01")} 
                 footer={
                   <p className="text-xs sm:text-sm text-center text-muted-foreground mt-2 p-1">
-                    {selectedDate ? `Selected: ${format(selectedDate, 'PPP')}` : "Pick a day."}
+                    {selectedDate ? `Selected: ${format(selectedDate, 'PPP')}` : "Pick a day to refresh data."}
                   </p>
                 }
               />
@@ -199,7 +210,7 @@ export default function PesoWatcherPage() {
                     onClick={handleRefresh} 
                     variant="outline" 
                     size="icon" 
-                    disabled={isLoading || !selectedDate} 
+                    disabled={isLoading} 
                     aria-label="Refresh data"
                     className="border-primary text-primary hover:bg-primary/10 active:bg-primary/20"
                 >
@@ -211,23 +222,27 @@ export default function PesoWatcherPage() {
               {isLoading && (
                 <div className="flex flex-col items-center justify-center">
                   <RefreshCw className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary mb-2" />
-                  <p className="text-sm sm:text-base text-muted-foreground">Fetching data...</p>
+                  <p className="text-sm sm:text-base text-muted-foreground">Fetching latest data...</p>
                 </div>
               )}
-              {!isLoading && selectedDate && (
-                <div className="text-sm sm:text-base text-muted-foreground">
-                  <p>
-                    Rates for {currencyData?.apiDate ? format(parseISO(currencyData.apiDate), 'PPP') : (selectedDate ? format(selectedDate, 'PPP'): 'the selected date')} will be shown in the modal.
+              {!isLoading && (
+                currencyData && currencyData.apiDate ? (
+                  <div className="text-sm sm:text-base text-muted-foreground">
+                    <p>
+                      Displaying latest rates updated on: <br />
+                      <span className="font-semibold">{format(parseISO(currencyData.apiDate), 'PPP p')}</span>.
+                    </p>
+                    {!isModalOpen && (currencyData.USD !== null || currencyData.EUR !== null) && (
+                        <Button onClick={() => setIsModalOpen(true)} variant="link" className="text-primary p-0 h-auto mt-1 text-sm sm:text-base">
+                          Re-open Modal
+                        </Button>
+                    )}
+                  </div>
+                ) : !isLoading && (
+                  <p className="text-sm sm:text-base text-muted-foreground">
+                    {selectedDate ? "Click refresh or select a date to fetch the latest rates." : "Please select a date from the calendar to fetch latest rates."}
                   </p>
-                  {!isModalOpen && currencyData && (currencyData.USD !== null || currencyData.EUR !== null) && (
-                      <Button onClick={() => setIsModalOpen(true)} variant="link" className="text-primary p-0 h-auto mt-1 text-sm sm:text-base">
-                        Re-open Modal
-                      </Button>
-                  )}
-                </div>
-              )}
-              {!isLoading && !selectedDate && (
-                <p className="text-sm sm:text-base text-muted-foreground">Please select a date from the calendar to view exchange rates.</p>
+                )
               )}
             </CardContent>
           </Card>
