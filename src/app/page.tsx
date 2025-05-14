@@ -58,11 +58,9 @@ export default function PesoWatcherPage() {
       setIsLoading(true);
       setCurrencyData(null);
 
-      const formattedDateForUsdApi = format(selectedDate, 'yyyy-MM-dd');
-      const year = format(selectedDate, 'yyyy');
-      const month = format(selectedDate, 'MM');
-      const day = format(selectedDate, 'dd');
-      
+      const formattedDateForStorage = format(selectedDate, 'yyyy-MM-dd'); // For storing quoteDate
+      const formattedDateForPath = format(selectedDate, 'yyyy/MM/dd'); // For API path YYYY/MM/DD
+
       let usdBlueValues: Quote | null = null;
       let usdOficialValues: Quote | null = null;
       let eurValues: Quote | null = null;
@@ -70,59 +68,59 @@ export default function PesoWatcherPage() {
 
       // Fetch USD Blue data
       try {
-        const usdBlueResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/blue/${formattedDateForUsdApi}`);
+        const usdBlueResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/blue/${formattedDateForPath}`);
         if (usdBlueResponse.ok) {
           const data = await usdBlueResponse.json();
           if (data && typeof data.compra === 'number' && typeof data.venta === 'number') {
             usdBlueValues = { compra: data.compra, venta: data.venta };
           } else {
-            errors.push(`USD (Blue) data for ${formattedDateForUsdApi} not found or compra/venta fields missing/invalid.`);
+            errors.push(`USD (Blue) data for ${formattedDateForPath} not found or compra/venta fields missing/invalid.`);
           }
         } else {
-          let errorMsg = `USD (Blue) API (${formattedDateForUsdApi}): ${usdBlueResponse.status} ${usdBlueResponse.statusText || 'Failed to fetch'}`;
-          try { const errorJson = await usdBlueResponse.json(); if (errorJson.error) errorMsg = `USD (Blue) API Error (${formattedDateForUsdApi}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Blue) API Error (${formattedDateForUsdApi}): ${errorJson.message}`;} catch {}
+          let errorMsg = `USD (Blue) API (${formattedDateForPath}): ${usdBlueResponse.status} ${usdBlueResponse.statusText || 'Failed to fetch'}`;
+          try { const errorJson = await usdBlueResponse.json(); if (errorJson.error) errorMsg = `USD (Blue) API Error (${formattedDateForPath}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Blue) API Error (${formattedDateForPath}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
       } catch (error: any) {
-          errors.push(`USD (Blue) API Fetch Error (${formattedDateForUsdApi}): ${error.message || 'Network error'}`);
+          errors.push(`USD (Blue) API Fetch Error (${formattedDateForPath}): ${error.message || 'Network error'}`);
       }
 
       // Fetch USD Oficial data
       try {
-        const usdOficialResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial/${formattedDateForUsdApi}`);
+        const usdOficialResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial/${formattedDateForPath}`);
         if (usdOficialResponse.ok) {
           const data = await usdOficialResponse.json();
           if (data && typeof data.compra === 'number' && typeof data.venta === 'number') {
             usdOficialValues = { compra: data.compra, venta: data.venta };
           } else {
-            errors.push(`USD (Oficial) data for ${formattedDateForUsdApi} not found or compra/venta fields missing/invalid.`);
+            errors.push(`USD (Oficial) data for ${formattedDateForPath} not found or compra/venta fields missing/invalid.`);
           }
         } else {
-          let errorMsg = `USD (Oficial) API (${formattedDateForUsdApi}): ${usdOficialResponse.status} ${usdOficialResponse.statusText || 'Failed to fetch'}`;
-          try { const errorJson = await usdOficialResponse.json(); if (errorJson.error) errorMsg = `USD (Oficial) API Error (${formattedDateForUsdApi}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Oficial) API Error (${formattedDateForUsdApi}): ${errorJson.message}`;} catch {}
+          let errorMsg = `USD (Oficial) API (${formattedDateForPath}): ${usdOficialResponse.status} ${usdOficialResponse.statusText || 'Failed to fetch'}`;
+          try { const errorJson = await usdOficialResponse.json(); if (errorJson.error) errorMsg = `USD (Oficial) API Error (${formattedDateForPath}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Oficial) API Error (${formattedDateForPath}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
       } catch (error: any) {
-          errors.push(`USD (Oficial) API Fetch Error (${formattedDateForUsdApi}): ${error.message || 'Network error'}`);
+          errors.push(`USD (Oficial) API Fetch Error (${formattedDateForPath}): ${error.message || 'Network error'}`);
       }
       
       // Fetch EUR data
       try {
-        const eurResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/eur/${year}/${month}/${day}`);
+        const eurResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/eur/${formattedDateForPath}`);
         if (eurResponse.ok) {
           const data = await eurResponse.json();
           if (data && typeof data.compra === 'number' && typeof data.venta === 'number') {
             eurValues = { compra: data.compra, venta: data.venta };
           } else {
-            errors.push(`EUR data for ${year}/${month}/${day} not found or compra/venta fields missing/invalid.`);
+            errors.push(`EUR data for ${formattedDateForPath} not found or compra/venta fields missing/invalid.`);
           }
         } else {
-          let errorMsg = `EUR API (${year}/${month}/${day}): ${eurResponse.status} ${eurResponse.statusText || 'Failed to fetch'}`;
-          try { const errorJson = await eurResponse.json(); if (errorJson.error) errorMsg = `EUR API Error (${year}/${month}/${day}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `EUR API Error (${year}/${month}/${day}): ${errorJson.message}`;} catch {}
+          let errorMsg = `EUR API (${formattedDateForPath}): ${eurResponse.status} ${eurResponse.statusText || 'Failed to fetch'}`;
+          try { const errorJson = await eurResponse.json(); if (errorJson.error) errorMsg = `EUR API Error (${formattedDateForPath}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `EUR API Error (${formattedDateForPath}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
       } catch (error: any) {
-          errors.push(`EUR API Fetch Error (${year}/${month}/${day}): ${error.message || 'Network error'}`);
+          errors.push(`EUR API Fetch Error (${formattedDateForPath}): ${error.message || 'Network error'}`);
       }
 
       if (errors.length > 0 && !usdBlueValues && !usdOficialValues && !eurValues) {
@@ -142,7 +140,7 @@ export default function PesoWatcherPage() {
         USD_BLUE: usdBlueValues,
         USD_OFICIAL: usdOficialValues,
         EUR: eurValues,
-        quoteDate: (usdBlueValues || usdOficialValues || eurValues) ? formattedDateForUsdApi : null,
+        quoteDate: (usdBlueValues || usdOficialValues || eurValues) ? formattedDateForStorage : null,
       };
       setCurrencyData(newCurrencyData);
 
