@@ -53,7 +53,6 @@ export default function PesoWatcherPage() {
 
   const fetchCurrencyData = useCallback(async () => {
     if (!selectedDate || !isValid(selectedDate)) {
-      // This case should ideally not be reached if fetch is only called when selectedDate is valid
       toast({
         title: t('toastNoValidDateTitle'),
         description: t('toastNoValidDateDescription'),
@@ -154,7 +153,7 @@ export default function PesoWatcherPage() {
       setCurrencyData(newCurrencyData);
 
       const modalDialogTitle = t('modalTitle');
-      const displayDate = newCurrencyData.quoteDate ? format(parse(newCurrencyData.quoteDate, 'yyyy-MM-dd', new Date()), 'MMM d, yyyy', { locale: dateLocale }) : (selectedDate ? format(selectedDate, 'MMM d, yyyy', { locale: dateLocale }) : t('selectedDateFallback'));
+      const displayDate = newCurrencyData.quoteDate ? format(parse(newCurrencyData.quoteDate, 'yyyy-MM-dd', new Date()), 'PPP', { locale: dateLocale }) : (selectedDate ? format(selectedDate, 'PPP', { locale: dateLocale }) : t('selectedDateFallback'));
       
       const modalDescription = (
         <div className="space-y-4">
@@ -248,16 +247,16 @@ export default function PesoWatcherPage() {
       setIsLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, t, dateLocale]); // Removed toast from deps as it's stable
+  }, [selectedDate, t, dateLocale]);
 
   useEffect(() => {
     if (selectedDate && isValid(selectedDate)) {
       fetchCurrencyData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate]); // Removed fetchCurrencyData from deps for this specific effect
+  }, [selectedDate]); 
 
-  // Effect to synchronize calendarMonth with selectedDate if selectedDate changes externally or by day click
+  // Effect to synchronize calendarMonth with selectedDate if selectedDate changes by day click
   useEffect(() => {
     if (selectedDate && isValid(selectedDate)) {
       const newCalMonth = startOfMonth(selectedDate);
@@ -273,7 +272,7 @@ export default function PesoWatcherPage() {
 
   const handleYearChange = (yearStr: string) => {
     const newYear = parseInt(yearStr);
-    const currentDisplayMonth = calendarMonth.getMonth(); // Use calendarMonth's current month
+    const currentDisplayMonth = calendarMonth.getMonth(); 
     
     let newCalendarFocusDate = startOfMonth(new Date(newYear, currentDisplayMonth, 1));
     const todayMonthStart = startOfMonth(new Date());
@@ -286,13 +285,11 @@ export default function PesoWatcherPage() {
         toast({ title: t('toastInvalidYearTitle'), description: t('toastInvalidYearDescriptionPast', { year: format(MIN_DATE, 'yyyy') }), variant: "destructive", duration: 3000 });
     }
     setCalendarMonth(newCalendarFocusDate);
-    // setSelectedDate(undefined); // Clear selected date when only navigating calendar
-    // setCurrencyData(null);
   };
 
   const handleMonthChange = (monthStr: string) => {
     const newMonth = parseInt(monthStr);
-    const currentDisplayYear = calendarMonth.getFullYear(); // Use calendarMonth's current year
+    const currentDisplayYear = calendarMonth.getFullYear(); 
 
     let newCalendarFocusDate = startOfMonth(new Date(currentDisplayYear, newMonth, 1));
     const todayMonthStart = startOfMonth(new Date());
@@ -305,25 +302,23 @@ export default function PesoWatcherPage() {
         toast({ title: t('toastInvalidMonthTitle'), description: t('toastInvalidMonthDescriptionPast', { monthYear: format(MIN_DATE, 'MMMM yyyy', { locale: dateLocale }) }), variant: "destructive", duration: 3000 });
     }
     setCalendarMonth(newCalendarFocusDate);
-    // setSelectedDate(undefined); // Clear selected date when only navigating calendar
-    // setCurrencyData(null);
   };
 
   const handleCalendarDaySelect = (date: Date | undefined) => {
     if (date) {
       if (date > new Date()) {
         toast({ title: t('toastInvalidDateTitle'), description: t('toastInvalidDateDescriptionFuture'), variant: "destructive", duration: 3000 });
-        setSelectedDate(undefined); // Keep previous valid selection or none
+        setSelectedDate(undefined); 
         setCurrencyData(null);
         return;
       }
       if (date < MIN_DATE) {
         toast({ title: t('toastInvalidDateTitle'), description: t('toastInvalidDateDescriptionPast', { date: format(MIN_DATE, 'P', { locale: dateLocale }) }), variant: "destructive", duration: 3000 });
-        setSelectedDate(undefined); // Keep previous valid selection or none
+        setSelectedDate(undefined); 
         setCurrencyData(null);
         return;
       }
-      setSelectedDate(date); // This will trigger the fetchCurrencyData effect
+      setSelectedDate(date); 
     } else {
       setSelectedDate(undefined);
       setCurrencyData(null);
@@ -400,6 +395,7 @@ export default function PesoWatcherPage() {
                 </Select>
               </div>
               <Calendar
+                key={calendarMonth.toISOString()}
                 mode="single"
                 selected={selectedDate}
                 onSelect={handleCalendarDaySelect}
