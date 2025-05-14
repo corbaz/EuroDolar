@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import { useState, useEffect, useCallback } from 'react';
-import { format, parse, parseISO } from 'date-fns';
+import { format, parse, parseISO, isValid } from 'date-fns';
 import { Calendar as CalendarIcon, DollarSign, Euro, RefreshCw, Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -17,17 +17,18 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface Quote {
+interface UsdQuote {
   compra: number | null;
   venta: number | null;
 }
 
 interface CurrencyData {
-  USD_BLUE: Quote | null;
-  USD_OFICIAL: Quote | null;
-  EUR: Quote | null;
-  quoteDate: string | null; // Date for which ALL quotes are (YYYY-MM-DD from selectedDate)
+  USD_BLUE: UsdQuote | null;
+  USD_OFICIAL: UsdQuote | null;
+  EUR: UsdQuote | null; 
+  quoteDate: string | null; 
 }
 
 interface ModalContent {
@@ -35,8 +36,11 @@ interface ModalContent {
   description: ReactNode;
 }
 
+const MIN_DATE = new Date("2000-01-01");
+
 export default function PesoWatcherPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [currencyData, setCurrencyData] = useState<CurrencyData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,10 +48,10 @@ export default function PesoWatcherPage() {
   const { toast } = useToast();
 
   const fetchCurrencyData = useCallback(async () => {
-    if (!selectedDate) {
+    if (!selectedDate || !isValid(selectedDate)) {
       toast({
-        title: "No Date Selected",
-        description: "Please select a date to fetch currency data.",
+        title: "No Valid Date Selected",
+        description: "Please select a valid date to fetch currency data.",
         variant: "destructive",
         duration: 3000,
       });
@@ -58,12 +62,12 @@ export default function PesoWatcherPage() {
       setIsLoading(true);
       setCurrencyData(null);
 
-      const formattedDateForStorage = format(selectedDate, 'yyyy-MM-dd'); // For storing quoteDate
-      const formattedDateForPath = format(selectedDate, 'yyyy/MM/dd'); // For API path YYYY/MM/DD
-
-      let usdBlueValues: Quote | null = null;
-      let usdOficialValues: Quote | null = null;
-      let eurValues: Quote | null = null;
+      const formattedDateForStorage = format(selectedDate, 'yyyy-MM-dd');
+      const formattedDateForPath = format(selectedDate, 'yyyy/MM/dd');
+      
+      let usdBlueValues: UsdQuote | null = null;
+      let usdOficialValues: UsdQuote | null = null;
+      let eurValues: UsdQuote | null = null;
       const errors: string[] = [];
 
       // Fetch USD Blue data
@@ -74,15 +78,15 @@ export default function PesoWatcherPage() {
           if (data && typeof data.compra === 'number' && typeof data.venta === 'number') {
             usdBlueValues = { compra: data.compra, venta: data.venta };
           } else {
-            errors.push(`USD (Blue) data for ${formattedDateForPath} not found or compra/venta fields missing/invalid.`);
+             errors.push(`USD (Blue) data for ${format(selectedDate, 'P')} not found or compra/venta fields missing/invalid.`);
           }
         } else {
-          let errorMsg = `USD (Blue) API (${formattedDateForPath}): ${usdBlueResponse.status} ${usdBlueResponse.statusText || 'Failed to fetch'}`;
-          try { const errorJson = await usdBlueResponse.json(); if (errorJson.error) errorMsg = `USD (Blue) API Error (${formattedDateForPath}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Blue) API Error (${formattedDateForPath}): ${errorJson.message}`;} catch {}
+          let errorMsg = `USD (Blue) API (${format(selectedDate, 'P')}): ${usdBlueResponse.status} ${usdBlueResponse.statusText || 'Failed to fetch'}`;
+          try { const errorJson = await usdBlueResponse.json(); if (errorJson.error) errorMsg = `USD (Blue) API Error (${format(selectedDate, 'P')}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Blue) API Error (${format(selectedDate, 'P')}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
       } catch (error: any) {
-          errors.push(`USD (Blue) API Fetch Error (${formattedDateForPath}): ${error.message || 'Network error'}`);
+          errors.push(`USD (Blue) API Fetch Error (${format(selectedDate, 'P')}): ${error.message || 'Network error'}`);
       }
 
       // Fetch USD Oficial data
@@ -93,15 +97,15 @@ export default function PesoWatcherPage() {
           if (data && typeof data.compra === 'number' && typeof data.venta === 'number') {
             usdOficialValues = { compra: data.compra, venta: data.venta };
           } else {
-            errors.push(`USD (Oficial) data for ${formattedDateForPath} not found or compra/venta fields missing/invalid.`);
+            errors.push(`USD (Oficial) data for ${format(selectedDate, 'P')} not found or compra/venta fields missing/invalid.`);
           }
         } else {
-          let errorMsg = `USD (Oficial) API (${formattedDateForPath}): ${usdOficialResponse.status} ${usdOficialResponse.statusText || 'Failed to fetch'}`;
-          try { const errorJson = await usdOficialResponse.json(); if (errorJson.error) errorMsg = `USD (Oficial) API Error (${formattedDateForPath}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Oficial) API Error (${formattedDateForPath}): ${errorJson.message}`;} catch {}
+          let errorMsg = `USD (Oficial) API (${format(selectedDate, 'P')}): ${usdOficialResponse.status} ${usdOficialResponse.statusText || 'Failed to fetch'}`;
+          try { const errorJson = await usdOficialResponse.json(); if (errorJson.error) errorMsg = `USD (Oficial) API Error (${format(selectedDate, 'P')}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Oficial) API Error (${format(selectedDate, 'P')}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
       } catch (error: any) {
-          errors.push(`USD (Oficial) API Fetch Error (${formattedDateForPath}): ${error.message || 'Network error'}`);
+          errors.push(`USD (Oficial) API Fetch Error (${format(selectedDate, 'P')}): ${error.message || 'Network error'}`);
       }
       
       // Fetch EUR data
@@ -112,17 +116,17 @@ export default function PesoWatcherPage() {
           if (data && typeof data.compra === 'number' && typeof data.venta === 'number') {
             eurValues = { compra: data.compra, venta: data.venta };
           } else {
-            errors.push(`EUR data for ${formattedDateForPath} not found or compra/venta fields missing/invalid.`);
+            errors.push(`EUR data for ${format(selectedDate, 'P')} not found or compra/venta fields missing/invalid.`);
           }
         } else {
-          let errorMsg = `EUR API (${formattedDateForPath}): ${eurResponse.status} ${eurResponse.statusText || 'Failed to fetch'}`;
-          try { const errorJson = await eurResponse.json(); if (errorJson.error) errorMsg = `EUR API Error (${formattedDateForPath}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `EUR API Error (${formattedDateForPath}): ${errorJson.message}`;} catch {}
+          let errorMsg = `EUR API (${format(selectedDate, 'P')}): ${eurResponse.status} ${eurResponse.statusText || 'Failed to fetch'}`;
+          try { const errorJson = await eurResponse.json(); if (errorJson.error) errorMsg = `EUR API Error (${format(selectedDate, 'P')}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `EUR API Error (${format(selectedDate, 'P')}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
       } catch (error: any) {
-          errors.push(`EUR API Fetch Error (${formattedDateForPath}): ${error.message || 'Network error'}`);
+          errors.push(`EUR API Fetch Error (${format(selectedDate, 'P')}): ${error.message || 'Network error'}`);
       }
-
+      
       if (errors.length > 0 && !usdBlueValues && !usdOficialValues && !eurValues) {
          toast({
           title: "API Errors",
@@ -130,7 +134,7 @@ export default function PesoWatcherPage() {
               <div className="max-h-40 overflow-y-auto">
                   {errors.map((e, i) => <p key={i}>{e}</p>)}
               </div>
-          ),
+          ), // Added missing comma
           variant: "destructive",
           duration: 5000,
         });
@@ -216,7 +220,7 @@ export default function PesoWatcherPage() {
               </div>
           )}
           {!newCurrencyData.USD_BLUE && !newCurrencyData.USD_OFICIAL && !newCurrencyData.EUR && errors.length === 0 && (
-               <p className="text-destructive font-medium">No exchange rate data found for the selected criteria.</p>
+               <p className="text-destructive font-medium">No exchange rate data found for the selected criteria for {displayDate}.</p>
           )}
         </div>
       );
@@ -247,21 +251,82 @@ export default function PesoWatcherPage() {
     }
   }, [selectedDate, fetchCurrencyData]);
 
-  const handleDateSelect = (date: Date | undefined) => {
+  useEffect(() => {
+    if (selectedDate) {
+      const newCalMonthForSelectedDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+      if (calendarMonth.getTime() !== newCalMonthForSelectedDate.getTime()) {
+        setCalendarMonth(newCalMonthForSelectedDate);
+      }
+    }
+  }, [selectedDate, calendarMonth]);
+
+
+  const currentYr = new Date().getFullYear();
+  const years = Array.from({ length: currentYr - MIN_DATE.getFullYear() + 1 }, (_, i) => currentYr - i);
+
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    value: i.toString(),
+    label: format(new Date(2000, i, 1), 'MMMM'),
+  }));
+
+  const handleYearChange = (yearStr: string) => {
+    const newYear = parseInt(yearStr);
+    const sDate = selectedDate || new Date();
+    const currentMonth = sDate.getMonth();
+    const currentDay = sDate.getDate();
+
+    let newDateCandidate = new Date(newYear, currentMonth, currentDay);
+    if (newDateCandidate.getMonth() !== currentMonth) { // Day is out of bounds for the new month
+      newDateCandidate = new Date(newYear, currentMonth + 1, 0); // Go to last day of month
+    }
+
+    if (newDateCandidate > new Date()) {
+      toast({ title: "Invalid Date", description: "Cannot select future dates. Resetting to today.", variant: "destructive", duration: 3000 });
+      newDateCandidate = new Date();
+    } else if (newDateCandidate < MIN_DATE) {
+      toast({ title: "Invalid Date", description: `Date cannot be before ${format(MIN_DATE, 'P')}. Resetting to ${format(MIN_DATE, 'P')}.`, variant: "destructive", duration: 3000 });
+      newDateCandidate = new Date(MIN_DATE);
+    }
+    setSelectedDate(newDateCandidate);
+  };
+
+  const handleMonthChange = (monthStr: string) => {
+    const newMonth = parseInt(monthStr);
+    const sDate = selectedDate || new Date();
+    const currentYear = sDate.getFullYear();
+    const currentDay = sDate.getDate();
+
+    let newDateCandidate = new Date(currentYear, newMonth, currentDay);
+    if (newDateCandidate.getMonth() !== newMonth) { // Day is out of bounds for the new month
+      newDateCandidate = new Date(currentYear, newMonth + 1, 0); // Go to last day of month
+    }
+    
+    if (newDateCandidate > new Date()) {
+      toast({ title: "Invalid Date", description: "Cannot select future dates. Resetting to today.", variant: "destructive", duration: 3000 });
+      newDateCandidate = new Date();
+    } else if (newDateCandidate < MIN_DATE) {
+      toast({ title: "Invalid Date", description: `Date cannot be before ${format(MIN_DATE, 'P')}. Resetting to ${format(MIN_DATE, 'P')}.`, variant: "destructive", duration: 3000 });
+      newDateCandidate = new Date(MIN_DATE);
+    }
+    setSelectedDate(newDateCandidate);
+  };
+
+  const handleCalendarDaySelect = (date: Date | undefined) => {
     if (date) {
       if (date > new Date()) {
-        toast({
-          title: "Invalid Date",
-          description: "Cannot select future dates. Showing data for today.",
-          variant: "destructive",
-          duration: 3000,
-        });
-        setSelectedDate(new Date()); 
+        toast({ title: "Invalid Date", description: "Cannot select future dates. Resetting to today.", variant: "destructive", duration: 3000 });
+        setSelectedDate(new Date());
         return;
       }
-      setSelectedDate(date); 
+      if (date < MIN_DATE) {
+        toast({ title: "Invalid Date", description: `Date cannot be before ${format(MIN_DATE, 'P')}. Resetting to ${format(MIN_DATE, 'P')}.`, variant: "destructive", duration: 3000 });
+        setSelectedDate(new Date(MIN_DATE));
+        return;
+      }
+      setSelectedDate(date);
     }
   };
+
 
   const handleRefresh = () => {
     if (selectedDate) {
@@ -271,8 +336,8 @@ export default function PesoWatcherPage() {
     }
   };
   
-  const displayDateInCard = currencyData?.quoteDate ? format(parse(currencyData.quoteDate, 'yyyy-MM-dd', new Date()), 'PPP') : (selectedDate ? format(selectedDate, 'PPP') : 'selected date');
-
+  const displayDateInCard = currencyData?.quoteDate && selectedDate ? format(parse(currencyData.quoteDate, 'yyyy-MM-dd', selectedDate), 'PPP') : (selectedDate ? format(selectedDate, 'PPP') : 'selected date');
+  
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <main className="container mx-auto p-4 sm:p-6 md:p-8 flex flex-col items-center flex-grow">
@@ -290,13 +355,48 @@ export default function PesoWatcherPage() {
                 <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Select Date for Rates
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex justify-center p-2 sm:p-4">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                <Select
+                  value={(selectedDate || new Date()).getFullYear().toString()}
+                  onValueChange={handleYearChange}
+                >
+                  <SelectTrigger className="w-full sm:w-[120px]">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={(selectedDate || new Date()).getMonth().toString()}
+                  onValueChange={handleMonthChange}
+                >
+                  <SelectTrigger className="w-full sm:w-[150px]">
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map((month) => (
+                      <SelectItem key={month.value} value={month.value}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={handleDateSelect}
-                className="rounded-md border shadow-sm bg-card"
-                disabled={(date) => date > new Date() || date < new Date("2000-01-01")} 
+                onSelect={handleCalendarDaySelect}
+                month={calendarMonth}
+                onMonthChange={setCalendarMonth}
+                className="rounded-md border shadow-sm bg-card mx-auto"
+                disabled={(date) => date > new Date() || date < MIN_DATE} 
+                initialFocus
                 footer={
                   <p className="text-xs sm:text-sm text-center text-muted-foreground mt-2 p-1">
                     {selectedDate ? `Selected: ${format(selectedDate, 'PPP')}` : "Pick a day for exchange rates."}
@@ -332,7 +432,7 @@ export default function PesoWatcherPage() {
                   <p className="text-sm sm:text-base text-muted-foreground">Fetching data...</p>
                 </div>
               )}
-              {!isLoading && currencyData && (
+              {!isLoading && currencyData && selectedDate && (
                 <div className="text-xs sm:text-sm text-muted-foreground space-y-2">
                   {currencyData.quoteDate && (
                     <p className="font-semibold text-card-foreground mb-1">Rates for: {displayDateInCard}</p>
@@ -388,11 +488,11 @@ export default function PesoWatcherPage() {
                         </Button>
                     )}
                     {(!currencyData.USD_BLUE && !currencyData.USD_OFICIAL && !currencyData.EUR) && (
-                        <p className="mt-2">No exchange rate data currently available for the selected criteria.</p>
+                        <p className="mt-2">No exchange rate data currently available for the selected criteria for {displayDateInCard}.</p>
                     )}
                 </div>
               )}
-               {!isLoading && !currencyData && (
+               {!isLoading && (!currencyData || !selectedDate) && (
                   <p className="text-sm sm:text-base text-muted-foreground text-center">
                     {selectedDate ? "Click refresh or select a date to fetch rates." : "Please select a date from the calendar."}
                   </p>
@@ -425,3 +525,5 @@ export default function PesoWatcherPage() {
     </div>
   );
 }
+
+    
