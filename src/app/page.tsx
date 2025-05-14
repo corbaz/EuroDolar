@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import { useState, useEffect, useCallback } from 'react';
-import { format, parse, parseISO, isValid } from 'date-fns';
+import { format, parse, isValid, startOfMonth } from 'date-fns';
 import { Calendar as CalendarIcon, DollarSign, Euro, RefreshCw, Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -27,8 +27,8 @@ interface UsdQuote {
 interface CurrencyData {
   USD_BLUE: UsdQuote | null;
   USD_OFICIAL: UsdQuote | null;
-  EUR: UsdQuote | null; 
-  quoteDate: string | null; 
+  EUR: UsdQuote | null;
+  quoteDate: string | null; // YYYY-MM-DD
 }
 
 interface ModalContent {
@@ -37,10 +37,11 @@ interface ModalContent {
 }
 
 const MIN_DATE = new Date("2000-01-01");
+const MIN_CALENDAR_MONTH = startOfMonth(MIN_DATE);
 
 export default function PesoWatcherPage() {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined); // Initialize to undefined
+  const [calendarMonth, setCalendarMonth] = useState<Date>(startOfMonth(new Date())); // Month/year for calendar view & dropdowns
   const [currencyData, setCurrencyData] = useState<CurrencyData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,6 +50,8 @@ export default function PesoWatcherPage() {
 
   const fetchCurrencyData = useCallback(async () => {
     if (!selectedDate || !isValid(selectedDate)) {
+      // This check might be redundant if selectedDate is always valid when this is called
+      // but good for safety.
       toast({
         title: "No Valid Date Selected",
         description: "Please select a valid date to fetch currency data.",
@@ -60,7 +63,7 @@ export default function PesoWatcherPage() {
     
     try {
       setIsLoading(true);
-      setCurrencyData(null);
+      setCurrencyData(null); // Clear previous data
 
       const formattedDateForStorage = format(selectedDate, 'yyyy-MM-dd');
       const formattedDateForPath = format(selectedDate, 'yyyy/MM/dd');
@@ -134,7 +137,7 @@ export default function PesoWatcherPage() {
               <div className="max-h-40 overflow-y-auto">
                   {errors.map((e, i) => <p key={i}>{e}</p>)}
               </div>
-          ), // Added missing comma
+          ),
           variant: "destructive",
           duration: 5000,
         });
@@ -149,7 +152,7 @@ export default function PesoWatcherPage() {
       setCurrencyData(newCurrencyData);
 
       const modalTitle = "Currency Exchange Rates";
-      const displayDate = newCurrencyData.quoteDate ? format(parse(newCurrencyData.quoteDate, 'yyyy-MM-dd', new Date()), 'MMM d, yyyy') : format(selectedDate, 'MMM d, yyyy');
+      const displayDate = newCurrencyData.quoteDate ? format(parse(newCurrencyData.quoteDate, 'yyyy-MM-dd', new Date()), 'MMM d, yyyy') : (selectedDate ? format(selectedDate, 'MMM d, yyyy') : "selected date");
       
       const modalDescription = (
         <div className="space-y-4">
@@ -246,19 +249,20 @@ export default function PesoWatcherPage() {
   }, [selectedDate, toast]); 
 
   useEffect(() => {
-    if (selectedDate) {
+    if (selectedDate && isValid(selectedDate)) {
       fetchCurrencyData();
     }
   }, [selectedDate, fetchCurrencyData]);
 
+  // Sync calendarMonth with selectedDate if selectedDate changes (e.g. after picking a day)
   useEffect(() => {
-    if (selectedDate) {
-      const newCalMonthForSelectedDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-      if (calendarMonth.getTime() !== newCalMonthForSelectedDate.getTime()) {
-        setCalendarMonth(newCalMonthForSelectedDate);
+    if (selectedDate && isValid(selectedDate)) {
+      const newCalMonth = startOfMonth(selectedDate);
+      if (calendarMonth.getTime() !== newCalMonth.getTime()) {
+        setCalendarMonth(newCalMonth);
       }
     }
-  }, [selectedDate, calendarMonth]);
+  }, [selectedDate]); // Removed calendarMonth from deps to avoid loop
 
 
   const currentYr = new Date().getFullYear();
@@ -271,68 +275,65 @@ export default function PesoWatcherPage() {
 
   const handleYearChange = (yearStr: string) => {
     const newYear = parseInt(yearStr);
-    const sDate = selectedDate || new Date();
-    const currentMonth = sDate.getMonth();
-    const currentDay = sDate.getDate();
+    const currentDisplayMonth = calendarMonth.getMonth(); // Month currently shown in calendar/dropdown
+    
+    let newCalendarFocusDate = startOfMonth(new Date(newYear, currentDisplayMonth, 1));
 
-    let newDateCandidate = new Date(newYear, currentMonth, currentDay);
-    if (newDateCandidate.getMonth() !== currentMonth) { // Day is out of bounds for the new month
-      newDateCandidate = new Date(newYear, currentMonth + 1, 0); // Go to last day of month
+    const todayMonthStart = startOfMonth(new Date());
+    
+    if (newCalendarFocusDate > todayMonthStart) {
+        newCalendarFocusDate = todayMonthStart; 
+        toast({ title: "Invalid Year", description: "Cannot select future years. Displaying current month.", variant: "destructive", duration: 3000 });
+    } else if (newCalendarFocusDate < MIN_CALENDAR_MONTH) {
+        newCalendarFocusDate = MIN_CALENDAR_MONTH; 
+        toast({ title: "Invalid Year", description: `Year cannot be before ${format(MIN_DATE, 'yyyy')}. Displaying earliest available month.`, variant: "destructive", duration: 3000 });
     }
-
-    if (newDateCandidate > new Date()) {
-      toast({ title: "Invalid Date", description: "Cannot select future dates. Resetting to today.", variant: "destructive", duration: 3000 });
-      newDateCandidate = new Date();
-    } else if (newDateCandidate < MIN_DATE) {
-      toast({ title: "Invalid Date", description: `Date cannot be before ${format(MIN_DATE, 'P')}. Resetting to ${format(MIN_DATE, 'P')}.`, variant: "destructive", duration: 3000 });
-      newDateCandidate = new Date(MIN_DATE);
-    }
-    setSelectedDate(newDateCandidate);
+    setCalendarMonth(newCalendarFocusDate);
   };
 
   const handleMonthChange = (monthStr: string) => {
     const newMonth = parseInt(monthStr);
-    const sDate = selectedDate || new Date();
-    const currentYear = sDate.getFullYear();
-    const currentDay = sDate.getDate();
+    const currentDisplayYear = calendarMonth.getFullYear(); // Year currently shown in calendar/dropdown
 
-    let newDateCandidate = new Date(currentYear, newMonth, currentDay);
-    if (newDateCandidate.getMonth() !== newMonth) { // Day is out of bounds for the new month
-      newDateCandidate = new Date(currentYear, newMonth + 1, 0); // Go to last day of month
+    let newCalendarFocusDate = startOfMonth(new Date(currentDisplayYear, newMonth, 1));
+
+    const todayMonthStart = startOfMonth(new Date());
+        
+    if (newCalendarFocusDate > todayMonthStart) {
+        newCalendarFocusDate = todayMonthStart;
+        toast({ title: "Invalid Month", description: "Cannot select future months. Displaying current month.", variant: "destructive", duration: 3000 });
+    } else if (newCalendarFocusDate < MIN_CALENDAR_MONTH) {
+        newCalendarFocusDate = MIN_CALENDAR_MONTH;
+        toast({ title: "Invalid Month", description: `Month cannot be before ${format(MIN_DATE, 'MMMM yyyy')}. Displaying earliest available month.`, variant: "destructive", duration: 3000 });
     }
-    
-    if (newDateCandidate > new Date()) {
-      toast({ title: "Invalid Date", description: "Cannot select future dates. Resetting to today.", variant: "destructive", duration: 3000 });
-      newDateCandidate = new Date();
-    } else if (newDateCandidate < MIN_DATE) {
-      toast({ title: "Invalid Date", description: `Date cannot be before ${format(MIN_DATE, 'P')}. Resetting to ${format(MIN_DATE, 'P')}.`, variant: "destructive", duration: 3000 });
-      newDateCandidate = new Date(MIN_DATE);
-    }
-    setSelectedDate(newDateCandidate);
+    setCalendarMonth(newCalendarFocusDate);
   };
 
   const handleCalendarDaySelect = (date: Date | undefined) => {
     if (date) {
       if (date > new Date()) {
-        toast({ title: "Invalid Date", description: "Cannot select future dates. Resetting to today.", variant: "destructive", duration: 3000 });
-        setSelectedDate(new Date());
+        toast({ title: "Invalid Date", description: "Cannot select future dates.", variant: "destructive", duration: 3000 });
+        // Optionally reset selectedDate or calendarMonth here if needed
         return;
       }
       if (date < MIN_DATE) {
-        toast({ title: "Invalid Date", description: `Date cannot be before ${format(MIN_DATE, 'P')}. Resetting to ${format(MIN_DATE, 'P')}.`, variant: "destructive", duration: 3000 });
-        setSelectedDate(new Date(MIN_DATE));
+        toast({ title: "Invalid Date", description: `Date cannot be before ${format(MIN_DATE, 'P')}.`, variant: "destructive", duration: 3000 });
+        // Optionally reset selectedDate or calendarMonth here if needed
         return;
       }
-      setSelectedDate(date);
+      setSelectedDate(date); // This will trigger fetchCurrencyData via useEffect
+    } else {
+      setSelectedDate(undefined); // Clear selected date if 'undefined' is passed
+      setCurrencyData(null); // Clear currency data if no date is selected
     }
   };
 
 
   const handleRefresh = () => {
-    if (selectedDate) {
+    if (selectedDate && isValid(selectedDate)) {
         fetchCurrencyData(); 
     } else {
-        toast({ title: "Select a Date", description: "Please select a date first to refresh.", variant: "default"});
+        toast({ title: "Select a Date", description: "Please select a date from the calendar first to refresh.", variant: "default"});
     }
   };
   
@@ -358,7 +359,7 @@ export default function PesoWatcherPage() {
             <CardContent className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row gap-2 mb-4">
                 <Select
-                  value={(selectedDate || new Date()).getFullYear().toString()}
+                  value={calendarMonth.getFullYear().toString()}
                   onValueChange={handleYearChange}
                 >
                   <SelectTrigger className="w-full sm:w-[120px]">
@@ -373,7 +374,7 @@ export default function PesoWatcherPage() {
                   </SelectContent>
                 </Select>
                 <Select
-                  value={(selectedDate || new Date()).getMonth().toString()}
+                  value={calendarMonth.getMonth().toString()}
                   onValueChange={handleMonthChange}
                 >
                   <SelectTrigger className="w-full sm:w-[150px]">
@@ -393,7 +394,7 @@ export default function PesoWatcherPage() {
                 selected={selectedDate}
                 onSelect={handleCalendarDaySelect}
                 month={calendarMonth}
-                onMonthChange={setCalendarMonth}
+                onMonthChange={setCalendarMonth} // Allows calendar's own navigation
                 className="rounded-md border shadow-sm bg-card mx-auto"
                 disabled={(date) => date > new Date() || date < MIN_DATE} 
                 initialFocus
@@ -492,9 +493,9 @@ export default function PesoWatcherPage() {
                     )}
                 </div>
               )}
-               {!isLoading && (!currencyData || !selectedDate) && (
+               {!isLoading && (!selectedDate || !currencyData) && (
                   <p className="text-sm sm:text-base text-muted-foreground text-center">
-                    {selectedDate ? "Click refresh or select a date to fetch rates." : "Please select a date from the calendar."}
+                    { calendarMonth ? "Please select a day from the calendar to fetch rates." : "Loading date picker..."}
                   </p>
                 )}
             </CardContent>
@@ -525,5 +526,6 @@ export default function PesoWatcherPage() {
     </div>
   );
 }
+    
 
     
