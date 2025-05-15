@@ -502,7 +502,7 @@ export default function PesoWatcherPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
-              <div className="mx-auto w-full sm:w-72">
+              <div className="mx-auto w-full sm:w-[278px]"> {/* Adjusted width for selectors */}
                 <div className="flex flex-col sm:flex-row gap-2 mb-4">
                   <Select
                     value={calendarMonth.getFullYear().toString()}
@@ -589,10 +589,10 @@ export default function PesoWatcherPage() {
                         {sortConfig.key !== 'currencyLabelKey' && <ChevronsUpDown className="ml-1 h-3 w-3 inline opacity-30" />}
                       </Button>
                     </div>
-                    <div className="w-[17.5%] text-right px-2">{t('historyTableBuy')}</div>
-                    <div className="w-[17.5%] text-right px-3 py-2">{t('historyTableSell')}</div>
+                    <div className="w-[17.5%] text-center px-2">{t('historyTableBuy')}</div>
+                    <div className="w-[17.5%] text-center px-2">{t('historyTableSell')}</div>
                   </div>
-                  <div className="max-h-[calc(400px_-_theme(spacing.12))] overflow-y-auto overflow-x-auto"> {/* Adjusted max-h and added overflow-x-auto */}
+                  <div className="max-h-[calc(400px_-_theme(spacing.10))] overflow-y-auto overflow-x-auto"> {/* Adjusted max-h and added overflow-x-auto */}
                     <Table>
                       <TableBody>
                         {sortedHistoricalRates.map((entry) => (
