@@ -515,7 +515,7 @@ function PesoWatcherPageContent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
-              <div className="mx-auto w-full max-w-[276px] sm:max-w-none sm:w-[278px]">
+               <div className="mx-auto w-full max-w-[276px] sm:max-w-none sm:w-[278px]">
                  <div className="flex flex-row gap-2 mb-4">
                     <Select
                       value={calendarMonth.getFullYear().toString()}
@@ -639,7 +639,7 @@ function PesoWatcherPageContent() {
 
         {modalContent && (
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogContent className="sm:max-w-md bg-card text-card-foreground rounded-xl shadow-xl border-border px-4 sm:px-6">
+            <DialogContent className="w-[calc(100%_-_2rem)] max-w-lg sm:w-full sm:max-w-md bg-card text-card-foreground rounded-xl shadow-xl border-border px-4 sm:px-6">
               <DialogHeader className="p-6 pb-4 border-b border-border">
                 <DialogTitle className="text-xl sm:text-2xl text-primary">{modalContent.title}</DialogTitle>
               </DialogHeader>
@@ -670,4 +670,5 @@ export default function PesoWatcherPage() {
     </Suspense>
   );
 }
+
 
