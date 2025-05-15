@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { format, parse, isValid, startOfMonth, subDays, isWeekend, parseISO } from 'date-fns';
-import { Calendar as CalendarIcon, DollarSign, Euro, RefreshCw, Info, History } from 'lucide-react';
+import { Calendar as CalendarIcon, DollarSign, Euro, RefreshCw, Info, History, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -46,16 +46,20 @@ interface ModalContent {
   description: ReactNode;
 }
 
+type CurrencyLabelKey = 'usdBlueLabel' | 'usdOficialLabel' | 'eurLabel';
+
 interface HistoricalRateEntry {
   id: string; // e.g., "2024-07-18-USD_BLUE"
   date: string; // ISO string "YYYY-MM-DD"
-  currencyLabelKey: 'usdBlueLabel' | 'usdOficialLabel' | 'eurLabel';
+  currencyLabelKey: CurrencyLabelKey;
   buy: number | null;
   sell: number | null;
 }
 
 const MIN_DATE = new Date("2000-01-01");
 const MIN_CALENDAR_MONTH = startOfMonth(MIN_DATE);
+const currencyOrder: Record<CurrencyLabelKey, number> = { 'usdBlueLabel': 1, 'usdOficialLabel': 2, 'eurLabel': 3 };
+
 
 export default function PesoWatcherPage() {
   const { t, dateLocale } = useLanguage();
@@ -69,6 +73,8 @@ export default function PesoWatcherPage() {
 
   const [flatHistoricalRates, setFlatHistoricalRates] = useState<HistoricalRateEntry[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+  const [sortConfig, setSortConfig] = useState<{ key: 'date' | 'currencyLabelKey'; direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' });
+
 
   const fetchCurrencyData = useCallback(async () => {
     if (!selectedDate || !isValid(selectedDate)) {
@@ -275,12 +281,9 @@ export default function PesoWatcherPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]); 
 
-  // Effect to synchronize calendarMonth with selectedDate if selectedDate changes by day click
-  // OR if year/month selectors change calendarMonth directly.
   useEffect(() => {
     if (selectedDate && isValid(selectedDate)) {
       const newCalMonth = startOfMonth(selectedDate);
-      // Only update if truly different to avoid potential loop if calendarMonth itself triggers selectedDate
       if (calendarMonth.getTime() !== newCalMonth.getTime()) {
         setCalendarMonth(newCalMonth);
       }
@@ -293,7 +296,7 @@ export default function PesoWatcherPage() {
 
   const handleYearChange = (yearStr: string) => {
     const newYear = parseInt(yearStr);
-    const currentDisplayMonth = calendarMonth.getMonth(); // Use current calendar month
+    const currentDisplayMonth = calendarMonth.getMonth(); 
     
     let newCalendarFocusDate = startOfMonth(new Date(newYear, currentDisplayMonth, 1));
     const todayMonthStart = startOfMonth(new Date());
@@ -306,12 +309,11 @@ export default function PesoWatcherPage() {
         toast({ title: t('toastInvalidYearTitle'), description: t('toastInvalidYearDescriptionPast', { year: format(MIN_DATE, 'yyyy') }), variant: "destructive", duration: 3000 });
     }
     setCalendarMonth(newCalendarFocusDate);
-    // DO NOT set selectedDate here
   };
 
   const handleMonthChange = (monthStr: string) => {
     const newMonth = parseInt(monthStr);
-    const currentDisplayYear = calendarMonth.getFullYear(); // Use current calendar year
+    const currentDisplayYear = calendarMonth.getFullYear();
 
     let newCalendarFocusDate = startOfMonth(new Date(currentDisplayYear, newMonth, 1));
     const todayMonthStart = startOfMonth(new Date());
@@ -324,7 +326,6 @@ export default function PesoWatcherPage() {
         toast({ title: t('toastInvalidMonthTitle'), description: t('toastInvalidMonthDescriptionPast', { monthYear: format(MIN_DATE, 'MMMM yyyy', { locale: dateLocale }) }), variant: "destructive", duration: 3000 });
     }
     setCalendarMonth(newCalendarFocusDate);
-    // DO NOT set selectedDate here
   };
 
   const handleCalendarDaySelect = (date: Date | undefined) => {
@@ -341,7 +342,7 @@ export default function PesoWatcherPage() {
         setCurrencyData(null);
         return;
       }
-      setSelectedDate(date); // This will trigger fetchCurrencyData via useEffect
+      setSelectedDate(date); 
     } else {
       setSelectedDate(undefined);
       setCurrencyData(null);
@@ -368,12 +369,13 @@ export default function PesoWatcherPage() {
     setIsHistoryLoading(true);
     const historicalRates: HistoricalRateEntry[] = [];
     const today = new Date();
-    let currentDate = subDays(today, 1); // Start from yesterday
+    let currentDate = subDays(today, 1); 
     const targetDays = 10;
-    const fetchedDays: string[] = [];
+    const fetchedDaysCount = 0;
+    const attemptedDates: string[] = []; // To keep track of dates we attempt to fetch for.
 
     const currencyConfigs: {
-      labelKey: 'usdBlueLabel' | 'usdOficialLabel' | 'eurLabel';
+      labelKey: CurrencyLabelKey;
       path: string;
     }[] = [
       { labelKey: 'usdBlueLabel', path: 'dolares/blue' },
@@ -381,52 +383,51 @@ export default function PesoWatcherPage() {
       { labelKey: 'eurLabel', path: 'eur' },
     ];
 
-    while (fetchedDays.length < targetDays) {
-      if (currentDate < MIN_DATE) break; // Stop if we go too far back
+    while (attemptedDates.length < targetDays && currentDate >= MIN_DATE) {
+        if (!isWeekend(currentDate)) {
+            attemptedDates.push(format(currentDate, 'yyyy-MM-dd')); // Track that we're attempting this day
 
-      if (!isWeekend(currentDate)) {
-        const dateStr = format(currentDate, 'yyyy-MM-dd');
-        const datePath = format(currentDate, 'yyyy/MM/dd');
-        fetchedDays.push(dateStr);
+            const datePath = format(currentDate, 'yyyy/MM/dd');
+            const dateStr = format(currentDate, 'yyyy-MM-dd');
 
-        for (const config of currencyConfigs) {
-          try {
-            const response = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/${config.path}/${datePath}`);
-            if (response.ok) {
-              const data = await response.json();
-              historicalRates.push({
-                id: `${dateStr}-${config.labelKey}`,
-                date: dateStr,
-                currencyLabelKey: config.labelKey,
-                buy: typeof data.compra === 'number' ? data.compra : null,
-                sell: typeof data.venta === 'number' ? data.venta : null,
-              });
-            } else {
-              historicalRates.push({
-                id: `${dateStr}-${config.labelKey}`,
-                date: dateStr,
-                currencyLabelKey: config.labelKey,
-                buy: null,
-                sell: null,
-              });
+            for (const config of currencyConfigs) {
+                try {
+                    const response = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/${config.path}/${datePath}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        historicalRates.push({
+                            id: `${dateStr}-${config.labelKey}`,
+                            date: dateStr,
+                            currencyLabelKey: config.labelKey,
+                            buy: typeof data.compra === 'number' ? data.compra : null,
+                            sell: typeof data.venta === 'number' ? data.venta : null,
+                        });
+                    } else {
+                        // Log error but still push entry to indicate attempt / missing data
+                        console.warn(`No data for ${config.labelKey} on ${dateStr}: ${response.status}`);
+                        historicalRates.push({
+                            id: `${dateStr}-${config.labelKey}`,
+                            date: dateStr,
+                            currencyLabelKey: config.labelKey,
+                            buy: null,
+                            sell: null,
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Error fetching historical ${config.labelKey} for ${dateStr}:`, error);
+                    historicalRates.push({
+                        id: `${dateStr}-${config.labelKey}`,
+                        date: dateStr,
+                        currencyLabelKey: config.labelKey,
+                        buy: null,
+                        sell: null,
+                    });
+                }
             }
-          } catch (error) {
-            console.error(`Error fetching historical ${config.labelKey} for ${dateStr}:`, error);
-            historicalRates.push({
-              id: `${dateStr}-${config.labelKey}`,
-              date: dateStr,
-              currencyLabelKey: config.labelKey,
-              buy: null,
-              sell: null,
-            });
-          }
         }
-      }
-      currentDate = subDays(currentDate, 1);
+        currentDate = subDays(currentDate, 1);
     }
     
-    // Sort by date (desc) then by a predefined currency order
-    const currencyOrder: Record<string, number> = { 'usdBlueLabel': 1, 'usdOficialLabel': 2, 'eurLabel': 3 };
     historicalRates.sort((a, b) => {
         if (a.date > b.date) return -1;
         if (a.date < b.date) return 1;
@@ -436,12 +437,64 @@ export default function PesoWatcherPage() {
     setFlatHistoricalRates(historicalRates);
     setIsHistoryLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t]); // t might not be necessary but good to include if used in error messages potentially
+  }, [t]); 
 
   useEffect(() => {
     fetchHistoricalData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleSort = (columnKey: 'date' | 'currencyLabelKey') => {
+    setSortConfig(currentSortConfig => {
+      let newDirection: 'asc' | 'desc' = 'asc';
+      if (currentSortConfig.key === columnKey) {
+        newDirection = currentSortConfig.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        if (columnKey === 'date') newDirection = 'asc'; 
+        else if (columnKey === 'currencyLabelKey') newDirection = 'asc'; 
+      }
+      return { key: columnKey, direction: newDirection };
+    });
+  };
+
+  const sortedHistoricalRates = useMemo(() => {
+    if (!flatHistoricalRates) return [];
+    const sortableRates = [...flatHistoricalRates];
+  
+    if (sortConfig.key === 'date') {
+      sortableRates.sort((a, b) => {
+        const dateA = parseISO(a.date).getTime();
+        const dateB = parseISO(b.date).getTime();
+        if (sortConfig.direction === 'asc') {
+          return dateA - dateB;
+        } else {
+          return dateB - dateA;
+        }
+      });
+    } else if (sortConfig.key === 'currencyLabelKey') {
+      sortableRates.sort((a, b) => {
+        const orderA = currencyOrder[a.currencyLabelKey] || 99;
+        const orderB = currencyOrder[b.currencyLabelKey] || 99;
+  
+        let currencyComparison: number;
+        if (sortConfig.direction === 'asc') { // USD Blue -> EUR based on currencyOrder
+          currencyComparison = orderA - orderB;
+        } else { // EUR -> USD Blue
+          currencyComparison = orderB - orderA;
+        }
+  
+        if (currencyComparison !== 0) {
+          return currencyComparison;
+        }
+  
+        // Secondary sort: date descending as per user request
+        const dateA = parseISO(a.date).getTime();
+        const dateB = parseISO(b.date).getTime();
+        return dateB - dateA;
+      });
+    }
+    return sortableRates;
+  }, [flatHistoricalRates, sortConfig]);
 
 
   return (
@@ -499,7 +552,7 @@ export default function PesoWatcherPage() {
                   </Select>
                 </div>
                 <Calendar
-                  key={calendarMonth.toISOString()} // Force re-render on month change
+                  key={calendarMonth.toISOString()}
                   mode="single"
                   selected={selectedDate}
                   onSelect={handleCalendarDaySelect}
@@ -549,7 +602,6 @@ export default function PesoWatcherPage() {
                     {currencyData.quoteDate && (
                       <p className="font-semibold text-card-foreground mb-1">{t('ratesForDateText', { date: displayDateInCard })}</p>
                     )}
-                    {/* USD Blue in Card */}
                     {currencyData.USD_BLUE ? (
                       <div>
                         <span className="font-medium text-card-foreground">{t('usdBlueLabel')}:</span>
@@ -564,7 +616,6 @@ export default function PesoWatcherPage() {
                       <p>{t('noExchangeRateDataSpecific', {currency: t('usdBlueLabel'), date: displayDateInCard})}</p>
                     )}
 
-                    {/* USD Oficial in Card */}
                     {currencyData.USD_OFICIAL ? (
                       <div>
                         <span className="font-medium text-card-foreground">{t('usdOficialLabel')}:</span>
@@ -579,7 +630,6 @@ export default function PesoWatcherPage() {
                       <p>{t('noExchangeRateDataSpecific', {currency: t('usdOficialLabel'), date: displayDateInCard})}</p>
                     )}
                     
-                    {/* EUR in Card */}
                     {currencyData.EUR ? (
                       <div>
                         <span className="font-medium text-card-foreground">{t('eurLabel')}:</span>
@@ -625,19 +675,31 @@ export default function PesoWatcherPage() {
                   <RefreshCw className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary mb-2" />
                   <p className="text-sm sm:text-base text-muted-foreground">{t('historyLoadingText')}</p>
                 </div>
-              ) : flatHistoricalRates.length > 0 ? (
+              ) : sortedHistoricalRates.length > 0 ? (
                 <div className="max-h-[400px] overflow-y-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-xs p-2">{t('historyTableDate')}</TableHead>
-                        <TableHead className="text-xs p-2">{t('historyTableCurrency')}</TableHead>
+                        <TableHead className="text-xs p-2 cursor-pointer hover:text-primary">
+                          <Button variant="ghost" onClick={() => handleSort('date')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
+                            {t('historyTableDate')}
+                            {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />)}
+                            {sortConfig.key !== 'date' && <ChevronsUpDown className="ml-1 h-3 w-3 inline opacity-30" />}
+                          </Button>
+                        </TableHead>
+                        <TableHead className="text-xs p-2 cursor-pointer hover:text-primary">
+                           <Button variant="ghost" onClick={() => handleSort('currencyLabelKey')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
+                            {t('historyTableCurrency')}
+                            {sortConfig.key === 'currencyLabelKey' && (sortConfig.direction === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />)}
+                            {sortConfig.key !== 'currencyLabelKey' && <ChevronsUpDown className="ml-1 h-3 w-3 inline opacity-30" />}
+                          </Button>
+                        </TableHead>
                         <TableHead className="text-right text-xs p-2">{t('historyTableBuy')}</TableHead>
                         <TableHead className="text-right text-xs p-2">{t('historyTableSell')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {flatHistoricalRates.map((entry) => (
+                      {sortedHistoricalRates.map((entry) => (
                         <TableRow key={entry.id}>
                           <TableCell className="text-xs p-2 whitespace-nowrap">
                              {format(parseISO(entry.date), 'EEEE, dd/MM', { locale: dateLocale })}
