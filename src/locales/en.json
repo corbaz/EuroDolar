@@ -12,14 +12,10 @@
   "monthSelectPlaceholder": "Month",
   "calendarFooterNoDate": "Pick a day for exchange rates.",
   "calendarFooterWithDate": "Selected: {{date}}",
-  "currencyInfoCardTitle": "Currency Information",
-  "refreshDataButtonLabel": "Refresh data",
   "fetchingDataText": "Fetching data...",
   "ratesForDateText": "Rates for: {{date}}",
   "compraShort": "Buy",
   "ventaShort": "Sell",
-  "noDataForDate": "No data available for {{date}}.",
-  "showFullDetailsButton": "Show Full Details",
   "noExchangeRateDataGeneric": "No exchange rate data currently available for the selected criteria for {{date}}.",
   "noExchangeRateDataSpecific": "No exchange rate data found for {{currency}} on {{date}}.",
   "pleaseSelectDay": "Please select a day from the calendar to fetch rates.",
@@ -44,8 +40,6 @@
   "toastInvalidMonthTitle": "Invalid Month",
   "toastInvalidMonthDescriptionFuture": "Cannot select future months. Displaying current month.",
   "toastInvalidMonthDescriptionPast": "Month cannot be before {{monthYear}}. Displaying earliest available month.",
-  "toastRefreshDateNeededTitle": "Select a Date",
-  "toastRefreshDateNeededDescription": "Please select a date from the calendar first to refresh.",
   "footerCopyrightText": "Peso Watcher © {{year}}",
   "historyCardTitle": "Last 10 Business Days History",
   "historyTableDate": "Date",
@@ -54,8 +48,7 @@
   "historyTableSell": "Sell",
   "historyLoadingText": "Loading history...",
   "historyNoDataText": "No historical data available for the last 10 business days.",
-  "selectedDateFallback": "a selected date",
-  "dataNotAvailableOnDateSimple": "Data not available for this currency.",
-  "noExchangeRateDataSpecificShort": "{{currency}}: No data."
+  "selectedDateFallback": "a selected date"
 }
 
+    

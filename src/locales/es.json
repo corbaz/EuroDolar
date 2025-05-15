@@ -12,14 +12,10 @@
   "monthSelectPlaceholder": "Mes",
   "calendarFooterNoDate": "Elige un día para ver las cotizaciones.",
   "calendarFooterWithDate": "Seleccionado: {{date}}",
-  "currencyInfoCardTitle": "Información de Monedas",
-  "refreshDataButtonLabel": "Actualizar datos",
   "fetchingDataText": "Obteniendo datos...",
   "ratesForDateText": "Cotizaciones para: {{date}}",
   "compraShort": "Compra",
   "ventaShort": "Venta",
-  "noDataForDate": "No hay datos disponibles para {{date}}.",
-  "showFullDetailsButton": "Mostrar Detalles Completos",
   "noExchangeRateDataGeneric": "No hay datos de cotización disponibles para los criterios seleccionados para {{date}}.",
   "noExchangeRateDataSpecific": "No se encontraron datos de cotización para {{currency}} en {{date}}.",
   "pleaseSelectDay": "Por favor, selecciona un día del calendario para obtener las cotizaciones.",
@@ -44,8 +40,6 @@
   "toastInvalidMonthTitle": "Mes Inválido",
   "toastInvalidMonthDescriptionFuture": "No se pueden seleccionar meses futuros. Mostrando mes actual.",
   "toastInvalidMonthDescriptionPast": "El mes no puede ser anterior a {{monthYear}}. Mostrando el primer mes disponible.",
-  "toastRefreshDateNeededTitle": "Selecciona una Fecha",
-  "toastRefreshDateNeededDescription": "Por favor, selecciona primero una fecha del calendario para actualizar.",
   "footerCopyrightText": "Peso Watcher © {{year}}",
   "historyCardTitle": "Historial Últimos 10 Días Hábiles",
   "historyTableDate": "Fecha",
@@ -54,8 +48,7 @@
   "historyTableSell": "Venta",
   "historyLoadingText": "Cargando historial...",
   "historyNoDataText": "No hay datos históricos disponibles para los últimos 10 días hábiles.",
-  "selectedDateFallback": "una fecha seleccionada",
-  "dataNotAvailableOnDateSimple": "Datos no disponibles para esta moneda.",
-  "noExchangeRateDataSpecificShort": "{{currency}}: Sin datos."
+  "selectedDateFallback": "una fecha seleccionada"
 }
 
+    

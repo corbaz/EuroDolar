@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { format, parse, isValid, startOfMonth, subDays, isWeekend, parseISO } from 'date-fns';
-import { Calendar as CalendarIcon, DollarSign, Euro, RefreshCw, Info, History, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react';
+import { Calendar as CalendarIcon, DollarSign, Euro, RefreshCw, History, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -348,16 +348,6 @@ export default function PesoWatcherPage() {
       setCurrencyData(null);
     }
   };
-
-  const handleRefresh = () => {
-    if (selectedDate && isValid(selectedDate)) {
-        fetchCurrencyData(); 
-    } else {
-        toast({ title: t('toastRefreshDateNeededTitle'), description: t('toastRefreshDateNeededDescription'), variant: "default"});
-    }
-  };
-  
-  const displayDateInCard = currencyData?.quoteDate && selectedDate ? format(parse(currencyData.quoteDate, 'yyyy-MM-dd', selectedDate), 'PPP', { locale: dateLocale }) : (selectedDate ? format(selectedDate, 'PPP', { locale: dateLocale }) : t('selectedDateFallback'));
   
   const localizedMonths = useMemo(() => 
     Array.from({ length: 12 }, (_, i) => ({
@@ -494,15 +484,6 @@ export default function PesoWatcherPage() {
     return sortableRates;
   }, [flatHistoricalRates, sortConfig]);
 
-  const currenciesToDisplayInInfoCard = useMemo(() => {
-    if (!currencyData) return [];
-    return [
-      { data: currencyData.USD_BLUE, labelKey: 'usdBlueLabel', icon: DollarSign },
-      { data: currencyData.USD_OFICIAL, labelKey: 'usdOficialLabel', icon: DollarSign },
-      { data: currencyData.EUR, labelKey: 'eurLabel', icon: Euro },
-    ];
-  }, [currencyData]);
-
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -517,8 +498,8 @@ export default function PesoWatcherPage() {
           </p>
         </header>
 
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-6xl">
-          <Card className="shadow-lg rounded-xl overflow-hidden border-border lg:col-span-1">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8 max-w-6xl">
+          <Card className="shadow-lg rounded-xl overflow-hidden border-border lg:col-span-2">
             <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
               <CardTitle className="flex items-center text-lg sm:text-xl">
                 <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {t('selectDateCardTitle')}
@@ -576,91 +557,8 @@ export default function PesoWatcherPage() {
               />
             </CardContent>
           </Card>
-
-          <Card className="shadow-lg rounded-xl overflow-hidden border-border lg:col-span-1">
-            <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
-              <CardTitle className="flex items-center justify-between text-lg sm:text-xl">
-                <span className="flex items-center">
-                  <Info className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary"/>
-                  {t('currencyInfoCardTitle')}
-                </span>
-                <Button 
-                    onClick={handleRefresh} 
-                    variant="outline" 
-                    size="icon" 
-                    disabled={isLoading || !selectedDate} 
-                    aria-label={t('refreshDataButtonLabel')}
-                    className="border-primary text-primary hover:bg-primary/10 active:bg-primary/20"
-                >
-                    <RefreshCw className={`h-4 w-4 sm:h-5 sm:w-5 ${isLoading ? 'animate-spin' : ''}`} />
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 text-left min-h-[220px] flex flex-col justify-center">
-              {isLoading && (
-                <div className="flex flex-col items-center justify-center">
-                  <RefreshCw className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary mb-2" />
-                  <p className="text-sm sm:text-base text-muted-foreground">{t('fetchingDataText')}</p>
-                </div>
-              )}
-              {!isLoading && currencyData && selectedDate && (
-                <>
-                  <p className="font-semibold text-card-foreground mb-3 text-base">
-                    {t('ratesForDateText', { date: displayDateInCard })}
-                  </p>
-                  <div className="space-y-3">
-                    {currenciesToDisplayInInfoCard.map((currency, index) => (
-                      currency.data ? (
-                        <div key={index}>
-                          <h4 className="flex items-center text-md font-semibold text-primary mb-0.5">
-                            <currency.icon className="w-4 h-4 mr-1.5" />
-                            {t(currency.labelKey as CurrencyLabelKey)}
-                          </h4>
-                          <div className="grid grid-cols-2 gap-x-2 pl-6 text-sm">
-                            <p>
-                              <span className="text-muted-foreground">{t('compraShort')}: </span>
-                              <span className="font-medium text-card-foreground">
-                                {currency.data.compra !== null ? currency.data.compra.toFixed(2) : 'N/A'}
-                              </span>
-                            </p>
-                            <p>
-                              <span className="text-muted-foreground">{t('ventaShort')}: </span>
-                              <span className="font-medium text-card-foreground">
-                                {currency.data.venta !== null ? currency.data.venta.toFixed(2) : 'N/A'} ARS
-                              </span>
-                            </p>
-                          </div>
-                          {(currency.data.compra === null && currency.data.venta === null) && (
-                              <p className="pl-6 text-xs text-muted-foreground mt-0.5">{t('dataNotAvailableOnDateSimple')}</p>
-                            )}
-                        </div>
-                      ) : (
-                        <div key={index} className="flex items-center text-muted-foreground">
-                          <currency.icon className="w-4 h-4 mr-1.5 opacity-50" />
-                          <span className="text-sm">{t('noExchangeRateDataSpecificShort', { currency: t(currency.labelKey as CurrencyLabelKey) })}</span>
-                        </div>
-                      )
-                    ))}
-                  </div>
-                  {!isModalOpen && (currencyData.USD_BLUE || currencyData.USD_OFICIAL || currencyData.EUR) && (
-                    <Button onClick={() => setIsModalOpen(true)} variant="link" className="text-primary p-0 h-auto mt-3 text-xs sm:text-sm self-start">
-                      {t('showFullDetailsButton')}
-                    </Button>
-                  )}
-                  {(!currencyData.USD_BLUE && !currencyData.USD_OFICIAL && !currencyData.EUR) && (
-                    <p className="mt-2 text-sm text-muted-foreground">{t('noExchangeRateDataGeneric', {date: displayDateInCard})}</p>
-                  )}
-                </>
-              )}
-              {!isLoading && (!selectedDate || !currencyData) && (
-                <p className="text-sm sm:text-base text-muted-foreground text-center">
-                  { calendarMonth ? t('pleaseSelectDay') : t('loadingDatePicker')}
-                </p>
-              )}
-            </CardContent>
-          </Card>
           
-          <Card className="shadow-lg rounded-xl overflow-hidden border-border md:col-span-2 lg:col-span-2">
+          <Card className="shadow-lg rounded-xl overflow-hidden border-border lg:col-span-3">
             <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
               <CardTitle className="flex items-center text-lg sm:text-xl">
                 <History className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {t('historyCardTitle')}
@@ -746,3 +644,5 @@ export default function PesoWatcherPage() {
     </div>
   );
 }
+
+    
