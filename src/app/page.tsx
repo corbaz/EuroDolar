@@ -24,8 +24,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  // TableHead, // No longer used directly here for the main table header
-  // TableHeader, // No longer used directly here for the main table header
   TableRow,
 } from "@/components/ui/table";
 
@@ -141,7 +139,8 @@ export default function PesoWatcherPage() {
       
       // Fetch EUR data
       try {
-        const eurResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/eur/${formattedDateForPath}`);
+        const { year, month, day } = { year: format(selectedDate, 'yyyy'), month: format(selectedDate, 'MM'), day: format(selectedDate, 'dd') };
+        const eurResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/eur/${year}/${month}/${day}`);
         if (eurResponse.ok) {
           const data = await eurResponse.json();
            if (data && typeof data.compra === 'number' && typeof data.venta === 'number') {
@@ -369,10 +368,11 @@ export default function PesoWatcherPage() {
     const currencyConfigs: {
       labelKey: CurrencyLabelKey;
       path: string;
+      isEuro?: boolean;
     }[] = [
       { labelKey: 'usdBlueLabel', path: 'dolares/blue' },
       { labelKey: 'usdOficialLabel', path: 'dolares/oficial' },
-      { labelKey: 'eurLabel', path: 'eur' },
+      { labelKey: 'eurLabel', path: 'eur', isEuro: true },
     ];
 
     while (attemptedDates.length < targetDays && currentDateIter >= MIN_DATE) {
@@ -384,7 +384,12 @@ export default function PesoWatcherPage() {
 
             for (const config of currencyConfigs) {
                 try {
-                    const response = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/${config.path}/${datePath}`);
+                    const { year, month, day } = { year: format(currentDateIter, 'yyyy'), month: format(currentDateIter, 'MM'), day: format(currentDateIter, 'dd') };
+                    const apiUrl = config.isEuro
+                        ? `https://api.argentinadatos.com/v1/cotizaciones/${config.path}/${year}/${month}/${day}`
+                        : `https://api.argentinadatos.com/v1/cotizaciones/${config.path}/${datePath}`;
+
+                    const response = await fetch(apiUrl);
                     if (response.ok) {
                         const data = await response.json();
                         historicalRates.push({
@@ -429,12 +434,12 @@ export default function PesoWatcherPage() {
     setFlatHistoricalRates(historicalRates);
     setIsHistoryLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t, dateLocale]); // Added dateLocale as a dependency for any t() calls that might use it indirectly
+  }, [t, dateLocale]); 
 
   useEffect(() => {
     fetchHistoricalData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Removed fetchHistoricalData from dependency array to prevent re-fetch on language change.
+  }, []); 
 
   const handleSort = (columnKey: 'date' | 'currencyLabelKey') => {
     setSortConfig(currentSortConfig => {
@@ -442,9 +447,8 @@ export default function PesoWatcherPage() {
       if (currentSortConfig.key === columnKey) {
         newDirection = currentSortConfig.direction === 'asc' ? 'desc' : 'asc';
       } else {
-        // Default sort directions when switching columns
-        if (columnKey === 'date') newDirection = 'desc'; // Default to newest first for date
-        else if (columnKey === 'currencyLabelKey') newDirection = 'asc'; // Default to A-Z (based on currencyOrder) for currency
+        if (columnKey === 'date') newDirection = 'desc'; 
+        else if (columnKey === 'currencyLabelKey') newDirection = 'asc';
       }
       return { key: columnKey, direction: newDirection };
     });
@@ -454,14 +458,12 @@ export default function PesoWatcherPage() {
     if (!flatHistoricalRates) return [];
     const sortableRates = [...flatHistoricalRates];
   
-    // Primary sort by the selected key and direction
     if (sortConfig.key === 'date') {
       sortableRates.sort((a, b) => {
         const dateA = parseISO(a.date).getTime();
         const dateB = parseISO(b.date).getTime();
         const primarySort = sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
         if (primarySort !== 0) return primarySort;
-        // Secondary sort by currency order if dates are the same
         return (currencyOrder[a.currencyLabelKey] || 99) - (currencyOrder[b.currencyLabelKey] || 99);
       });
     } else if (sortConfig.key === 'currencyLabelKey') {
@@ -470,9 +472,9 @@ export default function PesoWatcherPage() {
         const orderB = currencyOrder[b.currencyLabelKey] || 99;
   
         let currencyComparison: number;
-        if (sortConfig.direction === 'asc') { // Sort A-Z based on predefined order
+        if (sortConfig.direction === 'asc') { 
           currencyComparison = orderA - orderB;
-        } else { // Sort Z-A based on predefined order
+        } else { 
           currencyComparison = orderB - orderA;
         }
   
@@ -480,10 +482,9 @@ export default function PesoWatcherPage() {
           return currencyComparison;
         }
   
-        // If currencies are the same (or have same order value), sort by date (newest first)
         const dateA = parseISO(a.date).getTime();
         const dateB = parseISO(b.date).getTime();
-        return dateB - dateA; // Keep newest dates first within currency sort
+        return dateB - dateA; 
       });
     }
     return sortableRates;
@@ -551,7 +552,7 @@ export default function PesoWatcherPage() {
                   onSelect={handleCalendarDaySelect}
                   month={calendarMonth}
                   onMonthChange={setCalendarMonth}
-                  className="rounded-md border shadow-sm bg-card w-full"
+                  className="rounded-md border shadow-sm bg-card w-auto mx-auto sm:w-full sm:mx-0"
                   classNames={{
                     caption: "hidden sm:flex justify-center pt-1 relative items-center",
                     nav: "hidden sm:flex space-x-1 items-center",
@@ -587,7 +588,6 @@ export default function PesoWatcherPage() {
                 </div>
               ) : sortedHistoricalRates.length > 0 ? (
                 <>
-                  {/* Custom Fixed Header */}
                   <div className="flex items-center border-b pb-2 mb-2 text-xs font-medium text-muted-foreground">
                     <div className="w-[35%] px-2">
                       <Button variant="ghost" onClick={() => handleSort('date')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
@@ -606,10 +606,8 @@ export default function PesoWatcherPage() {
                     <div className="w-[17.5%] text-center px-2">{t('historyTableBuy')}</div>
                     <div className="w-[17.5%] text-center px-2">{t('historyTableSell')}</div>
                   </div>
-                  {/* Scrollable Table Body */}
-                  <div className="max-h-[calc(400px_-_theme(spacing.10))] overflow-y-auto overflow-x-auto"> {/* Adjusted max-h */}
+                  <div className="max-h-[calc(400px_-_theme(spacing.10))] overflow-y-auto overflow-x-auto"> 
                     <Table>
-                      {/* TableHeader is intentionally omitted here as we use a custom fixed header above */}
                       <TableBody>
                         {sortedHistoricalRates.map((entry) => (
                           <TableRow key={entry.id}>
@@ -620,7 +618,7 @@ export default function PesoWatcherPage() {
                             <TableCell className="text-right text-xs p-2 w-[17.5%]">
                               {entry.buy !== null ? entry.buy.toFixed(2) : 'N/A'}
                             </TableCell>
-                            <TableCell className="text-right text-xs px-3 py-2 w-[17.5%]"> {/* Venta/Sell column with pr-3 for scrollbar */}
+                            <TableCell className="text-right text-xs px-3 py-2 w-[17.5%]">
                               {entry.sell !== null ? entry.sell.toFixed(2) : 'N/A'}
                             </TableCell>
                           </TableRow>
@@ -662,6 +660,5 @@ export default function PesoWatcherPage() {
     </div>
   );
 }
-    
 
     
