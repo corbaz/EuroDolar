@@ -24,6 +24,8 @@ import {
   Table,
   TableBody,
   TableCell,
+  // TableHead, // No longer used directly here for the main table header
+  // TableHeader, // No longer used directly here for the main table header
   TableRow,
 } from "@/components/ui/table";
 
@@ -393,6 +395,7 @@ export default function PesoWatcherPage() {
                             sell: typeof data.venta === 'number' ? data.venta : null,
                         });
                     } else {
+                        // Push entry with nulls if API call fails or returns non-OK status
                         historicalRates.push({
                             id: `${dateStr}-${config.labelKey}`,
                             date: dateStr,
@@ -402,6 +405,7 @@ export default function PesoWatcherPage() {
                         });
                     }
                 } catch (error) {
+                     // Push entry with nulls on network or other errors
                     historicalRates.push({
                         id: `${dateStr}-${config.labelKey}`,
                         date: dateStr,
@@ -415,6 +419,7 @@ export default function PesoWatcherPage() {
         currentDateIter = subDays(currentDateIter, 1);
     }
     
+    // Sort by date descending, then by predefined currency order
     historicalRates.sort((a, b) => {
         if (a.date > b.date) return -1;
         if (a.date < b.date) return 1;
@@ -424,12 +429,12 @@ export default function PesoWatcherPage() {
     setFlatHistoricalRates(historicalRates);
     setIsHistoryLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t, dateLocale]); 
+  }, [t, dateLocale]); // Added dateLocale as a dependency for any t() calls that might use it indirectly
 
   useEffect(() => {
     fetchHistoricalData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Removed fetchHistoricalData from dependency array to prevent re-fetch on language change.
 
   const handleSort = (columnKey: 'date' | 'currencyLabelKey') => {
     setSortConfig(currentSortConfig => {
@@ -437,8 +442,9 @@ export default function PesoWatcherPage() {
       if (currentSortConfig.key === columnKey) {
         newDirection = currentSortConfig.direction === 'asc' ? 'desc' : 'asc';
       } else {
+        // Default sort directions when switching columns
         if (columnKey === 'date') newDirection = 'desc'; // Default to newest first for date
-        else if (columnKey === 'currencyLabelKey') newDirection = 'asc'; 
+        else if (columnKey === 'currencyLabelKey') newDirection = 'asc'; // Default to A-Z (based on currencyOrder) for currency
       }
       return { key: columnKey, direction: newDirection };
     });
@@ -448,12 +454,14 @@ export default function PesoWatcherPage() {
     if (!flatHistoricalRates) return [];
     const sortableRates = [...flatHistoricalRates];
   
+    // Primary sort by the selected key and direction
     if (sortConfig.key === 'date') {
       sortableRates.sort((a, b) => {
         const dateA = parseISO(a.date).getTime();
         const dateB = parseISO(b.date).getTime();
         const primarySort = sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
         if (primarySort !== 0) return primarySort;
+        // Secondary sort by currency order if dates are the same
         return (currencyOrder[a.currencyLabelKey] || 99) - (currencyOrder[b.currencyLabelKey] || 99);
       });
     } else if (sortConfig.key === 'currencyLabelKey') {
@@ -462,9 +470,9 @@ export default function PesoWatcherPage() {
         const orderB = currencyOrder[b.currencyLabelKey] || 99;
   
         let currencyComparison: number;
-        if (sortConfig.direction === 'asc') { 
+        if (sortConfig.direction === 'asc') { // Sort A-Z based on predefined order
           currencyComparison = orderA - orderB;
-        } else { 
+        } else { // Sort Z-A based on predefined order
           currencyComparison = orderB - orderA;
         }
   
@@ -472,6 +480,7 @@ export default function PesoWatcherPage() {
           return currencyComparison;
         }
   
+        // If currencies are the same (or have same order value), sort by date (newest first)
         const dateA = parseISO(a.date).getTime();
         const dateB = parseISO(b.date).getTime();
         return dateB - dateA; // Keep newest dates first within currency sort
@@ -496,7 +505,7 @@ export default function PesoWatcherPage() {
 
         <div className="w-full grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8 max-w-6xl">
           <Card className="shadow-lg rounded-xl border-border lg:col-span-2">
-            <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6 text-center">
+            <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
               <CardTitle className="flex items-center justify-center text-lg sm:text-xl">
                 <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {t('selectDateCardTitle')}
               </CardTitle>
@@ -543,6 +552,10 @@ export default function PesoWatcherPage() {
                   month={calendarMonth}
                   onMonthChange={setCalendarMonth}
                   className="rounded-md border shadow-sm bg-card w-full"
+                  classNames={{
+                    caption: "hidden sm:flex justify-center pt-1 relative items-center",
+                    nav: "hidden sm:flex space-x-1 items-center",
+                  }}
                   disabled={(date) => {
                     const today = new Date();
                     today.setHours(0,0,0,0);
@@ -561,7 +574,7 @@ export default function PesoWatcherPage() {
           </Card>
           
           <Card className="shadow-lg rounded-xl border-border lg:col-span-3">
-            <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6 text-center">
+            <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
               <CardTitle className="flex items-center justify-center text-lg sm:text-xl">
                 <History className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {t('historyCardTitle')}
               </CardTitle>
@@ -574,6 +587,7 @@ export default function PesoWatcherPage() {
                 </div>
               ) : sortedHistoricalRates.length > 0 ? (
                 <>
+                  {/* Custom Fixed Header */}
                   <div className="flex items-center border-b pb-2 mb-2 text-xs font-medium text-muted-foreground">
                     <div className="w-[35%] px-2">
                       <Button variant="ghost" onClick={() => handleSort('date')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
@@ -592,8 +606,10 @@ export default function PesoWatcherPage() {
                     <div className="w-[17.5%] text-center px-2">{t('historyTableBuy')}</div>
                     <div className="w-[17.5%] text-center px-2">{t('historyTableSell')}</div>
                   </div>
-                  <div className="max-h-[calc(400px_-_theme(spacing.10))] overflow-y-auto overflow-x-auto"> {/* Adjusted max-h and added overflow-x-auto */}
+                  {/* Scrollable Table Body */}
+                  <div className="max-h-[calc(400px_-_theme(spacing.10))] overflow-y-auto overflow-x-auto"> {/* Adjusted max-h */}
                     <Table>
+                      {/* TableHeader is intentionally omitted here as we use a custom fixed header above */}
                       <TableBody>
                         {sortedHistoricalRates.map((entry) => (
                           <TableRow key={entry.id}>
@@ -604,7 +620,7 @@ export default function PesoWatcherPage() {
                             <TableCell className="text-right text-xs p-2 w-[17.5%]">
                               {entry.buy !== null ? entry.buy.toFixed(2) : 'N/A'}
                             </TableCell>
-                            <TableCell className="text-right text-xs px-3 py-2 w-[17.5%]">
+                            <TableCell className="text-right text-xs px-3 py-2 w-[17.5%]"> {/* Venta/Sell column with pr-3 for scrollbar */}
                               {entry.sell !== null ? entry.sell.toFixed(2) : 'N/A'}
                             </TableCell>
                           </TableRow>
@@ -646,5 +662,6 @@ export default function PesoWatcherPage() {
     </div>
   );
 }
+    
 
     
