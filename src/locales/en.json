@@ -46,5 +46,13 @@
   "toastInvalidMonthDescriptionPast": "Month cannot be before {{monthYear}}. Displaying earliest available month.",
   "toastRefreshDateNeededTitle": "Select a Date",
   "toastRefreshDateNeededDescription": "Please select a date from the calendar first to refresh.",
-  "footerCopyrightText": "Peso Watcher © {{year}}"
+  "footerCopyrightText": "Peso Watcher © {{year}}",
+  "historyCardTitle": "Last 10 Business Days History",
+  "historyTableDate": "Date",
+  "historyTableCurrency": "Currency",
+  "historyTableBuy": "Buy",
+  "historyTableSell": "Sell",
+  "historyLoadingText": "Loading history...",
+  "historyNoDataText": "No historical data available for the last 10 business days."
 }
+

@@ -46,5 +46,13 @@
   "toastInvalidMonthDescriptionPast": "El mes no puede ser anterior a {{monthYear}}. Mostrando el primer mes disponible.",
   "toastRefreshDateNeededTitle": "Selecciona una Fecha",
   "toastRefreshDateNeededDescription": "Por favor, selecciona primero una fecha del calendario para actualizar.",
-  "footerCopyrightText": "Peso Watcher © {{year}}"
+  "footerCopyrightText": "Peso Watcher © {{year}}",
+  "historyCardTitle": "Historial Últimos 10 Días Hábiles",
+  "historyTableDate": "Fecha",
+  "historyTableCurrency": "Moneda",
+  "historyTableBuy": "Compra",
+  "historyTableSell": "Venta",
+  "historyLoadingText": "Cargando historial...",
+  "historyNoDataText": "No hay datos históricos disponibles para los últimos 10 días hábiles."
 }
+
