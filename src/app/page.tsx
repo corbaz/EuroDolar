@@ -73,7 +73,8 @@ function PageLoading() {
 }
 
 function PesoWatcherPageContent() {
-  const searchParams = useSearchParams(); 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _searchParams = useSearchParams(); 
   const { t, dateLocale } = useLanguage();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [calendarMonth, setCalendarMonth] = useState<Date>(startOfMonth(new Date()));
@@ -266,7 +267,7 @@ function PesoWatcherPageContent() {
       });
       setIsModalOpen(true);
 
-    } catch (error: any) {
+    } catch (error: any) { 
       console.error("Critical error in fetchCurrencyData:", error);
       setModalContent({
         title: t('criticalErrorTitle'),
@@ -514,7 +515,7 @@ function PesoWatcherPageContent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
-              <div className="mx-auto w-full max-w-xs sm:max-w-none sm:w-[278px]">
+              <div className="mx-auto w-full max-w-[276px] sm:max-w-none sm:w-[278px]">
                  <div className="flex flex-row gap-2 mb-4">
                     <Select
                       value={calendarMonth.getFullYear().toString()}
@@ -670,4 +671,3 @@ export default function PesoWatcherPage() {
   );
 }
 
-    
