@@ -110,7 +110,7 @@ export default function PesoWatcherPage() {
              errors.push(t('noExchangeRateDataSpecific', { currency: t('usdBlueLabel'), date: format(selectedDate, 'P', { locale: dateLocale }) }));
           }
         } else {
-          let errorMsg = `USD (Blue) API (${format(selectedDate, 'P', { locale: dateLocale })}): ${usdBlueResponse.status} ${usdBlueResponse.statusText || 'Failed to fetch'}`;
+          let errorMsg = `USD (Blue) API Error (${format(selectedDate, 'P', { locale: dateLocale })}): ${usdBlueResponse.status} ${usdBlueResponse.statusText || 'Failed to fetch'}`;
           try { const errorJson = await usdBlueResponse.json(); if (errorJson.error) errorMsg = `USD (Blue) API Error (${format(selectedDate, 'P', { locale: dateLocale })}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Blue) API Error (${format(selectedDate, 'P', { locale: dateLocale })}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
@@ -129,7 +129,7 @@ export default function PesoWatcherPage() {
             errors.push(t('noExchangeRateDataSpecific', { currency: t('usdOficialLabel'), date: format(selectedDate, 'P', { locale: dateLocale }) }));
           }
         } else {
-          let errorMsg = `USD (Oficial) API (${format(selectedDate, 'P', { locale: dateLocale })}): ${usdOficialResponse.status} ${usdOficialResponse.statusText || 'Failed to fetch'}`;
+          let errorMsg = `USD (Oficial) API Error (${format(selectedDate, 'P', { locale: dateLocale })}): ${usdOficialResponse.status} ${usdOficialResponse.statusText || 'Failed to fetch'}`;
           try { const errorJson = await usdOficialResponse.json(); if (errorJson.error) errorMsg = `USD (Oficial) API Error (${format(selectedDate, 'P', { locale: dateLocale })}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `USD (Oficial) API Error (${format(selectedDate, 'P', { locale: dateLocale })}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
@@ -148,7 +148,7 @@ export default function PesoWatcherPage() {
             errors.push(t('noExchangeRateDataSpecific', { currency: t('eurLabel'), date: format(selectedDate, 'P', { locale: dateLocale }) }));
           }
         } else {
-          let errorMsg = `EUR API (${format(selectedDate, 'P', { locale: dateLocale })}): ${eurResponse.status} ${eurResponse.statusText || 'Failed to fetch'}`;
+          let errorMsg = `EUR API Error (${format(selectedDate, 'P', { locale: dateLocale })}): ${eurResponse.status} ${eurResponse.statusText || 'Failed to fetch'}`;
           try { const errorJson = await eurResponse.json(); if (errorJson.error) errorMsg = `EUR API Error (${format(selectedDate, 'P', { locale: dateLocale })}): ${errorJson.error}`; else if (errorJson.message) errorMsg = `EUR API Error (${format(selectedDate, 'P', { locale: dateLocale })}): ${errorJson.message}`;} catch {}
           errors.push(errorMsg);
         }
@@ -502,13 +502,13 @@ export default function PesoWatcherPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
-              <div className="mx-auto w-full sm:w-[278px]"> {/* Adjusted width for selectors */}
-                <div className="flex flex-col sm:flex-row gap-2 mb-4">
+              <div className="mx-auto w-full sm:w-[278px]">
+                <div className="flex flex-row gap-2 mb-4">
                   <Select
                     value={calendarMonth.getFullYear().toString()}
                     onValueChange={handleYearChange}
                   >
-                    <SelectTrigger className="w-full sm:w-[120px]">
+                    <SelectTrigger className="w-[calc(50%_-_theme(space.1))] sm:w-[120px]">
                       <SelectValue placeholder={t('yearSelectPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -523,7 +523,7 @@ export default function PesoWatcherPage() {
                     value={calendarMonth.getMonth().toString()}
                     onValueChange={handleMonthChange}
                   >
-                    <SelectTrigger className="w-full sm:w-[150px]">
+                    <SelectTrigger className="w-[calc(50%_-_theme(space.1))] sm:w-[150px]">
                       <SelectValue placeholder={t('monthSelectPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -646,5 +646,3 @@ export default function PesoWatcherPage() {
     </div>
   );
 }
-
-    
