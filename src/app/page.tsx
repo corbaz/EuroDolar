@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { format, parse, isValid, startOfMonth, subDays, isWeekend, parseISO } from 'date-fns';
 import { Calendar as CalendarIcon, DollarSign, Euro, History, ArrowUp, ArrowDown, ChevronsUpDown, RefreshCw } from 'lucide-react';
@@ -56,15 +56,24 @@ interface HistoricalRateEntry {
 }
 
 const MIN_DATE = new Date("2000-01-01");
-MIN_DATE.setHours(0, 0, 0, 0); // Ensure it's start of day
+MIN_DATE.setHours(0, 0, 0, 0); 
 
 const MIN_CALENDAR_MONTH = startOfMonth(MIN_DATE);
 const currencyOrder: Record<CurrencyLabelKey, number> = { 'usdBlueLabel': 1, 'usdOficialLabel': 2, 'eurLabel': 3 };
 
 
-export default function PesoWatcherPage() {
-  const searchParams = useSearchParams(); 
+function PageLoading() {
+  const { t } = useLanguage();
+  return (
+    <div className="flex flex-col min-h-screen bg-background text-foreground items-center justify-center p-4">
+      <RefreshCw className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-primary mb-3 sm:mb-4" />
+      <p className="text-lg sm:text-xl text-muted-foreground">{t('loadingDatePicker')}</p>
+    </div>
+  );
+}
 
+function PesoWatcherPageContent() {
+  const searchParams = useSearchParams(); 
   const { t, dateLocale } = useLanguage();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [calendarMonth, setCalendarMonth] = useState<Date>(startOfMonth(new Date()));
@@ -77,7 +86,6 @@ export default function PesoWatcherPage() {
   const [flatHistoricalRates, setFlatHistoricalRates] = useState<HistoricalRateEntry[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<{ key: 'date' | 'currencyLabelKey'; direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' });
-
 
   const fetchCurrencyData = useCallback(async () => {
     if (!selectedDate || !isValid(selectedDate)) {
@@ -498,8 +506,8 @@ export default function PesoWatcherPage() {
           </p>
         </header>
 
-        <div className="w-full grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8 max-w-6xl">
-          <Card className="shadow-lg rounded-xl border-border lg:col-span-2">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl">
+          <Card className="shadow-lg rounded-xl border-border lg:col-span-1">
             <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
               <CardTitle className="flex items-center justify-center text-lg sm:text-xl">
                 <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {t('selectDateCardTitle')}
@@ -507,38 +515,38 @@ export default function PesoWatcherPage() {
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
               <div className="mx-auto w-full max-w-xs sm:max-w-none sm:w-[278px]">
-                <div className="flex flex-row gap-2 mb-4">
-                  <Select
-                    value={calendarMonth.getFullYear().toString()}
-                    onValueChange={handleYearChange}
-                  >
-                    <SelectTrigger className="w-[calc(50%_-_theme(space.1))] sm:w-[120px]">
-                      <SelectValue placeholder={t('yearSelectPlaceholder')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {years.map((year) => (
-                        <SelectItem key={year} value={year.toString()}>
-                          {year}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={calendarMonth.getMonth().toString()}
-                    onValueChange={handleMonthChange}
-                  >
-                    <SelectTrigger className="w-[calc(50%_-_theme(space.1))] sm:w-[150px]">
-                      <SelectValue placeholder={t('monthSelectPlaceholder')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {localizedMonths.map((month) => (
-                        <SelectItem key={month.value} value={month.value}>
-                          {month.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                 <div className="flex flex-row gap-2 mb-4">
+                    <Select
+                      value={calendarMonth.getFullYear().toString()}
+                      onValueChange={handleYearChange}
+                    >
+                      <SelectTrigger className="w-[calc(50%_-_theme(space.1))] sm:w-[120px]">
+                        <SelectValue placeholder={t('yearSelectPlaceholder')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {years.map((year) => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={calendarMonth.getMonth().toString()}
+                      onValueChange={handleMonthChange}
+                    >
+                      <SelectTrigger className="w-[calc(50%_-_theme(space.1))] sm:w-[150px]">
+                        <SelectValue placeholder={t('monthSelectPlaceholder')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {localizedMonths.map((month) => (
+                          <SelectItem key={month.value} value={month.value}>
+                            {month.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 <Calendar
                   key={calendarMonth.toISOString()}
                   mode="single"
@@ -568,61 +576,59 @@ export default function PesoWatcherPage() {
             </CardContent>
           </Card>
           
-          <Card className="shadow-lg rounded-xl border-border lg:col-span-3">
+          <Card className="shadow-lg rounded-xl border-border lg:col-span-2">
             <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
               <CardTitle className="flex items-center justify-center text-lg sm:text-xl">
                 <History className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {t('historyCardTitle')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center border-b pb-2 mb-2 text-xs font-medium text-muted-foreground">
+                  <div className="w-[35%] px-2">
+                    <Button variant="ghost" onClick={() => handleSort('date')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
+                      {t('historyTableDate')}
+                      {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />)}
+                      {sortConfig.key !== 'date' && <ChevronsUpDown className="ml-1 h-3 w-3 inline opacity-30" />}
+                    </Button>
+                  </div>
+                  <div className="w-[30%] px-2">
+                    <Button variant="ghost" onClick={() => handleSort('currencyLabelKey')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
+                      {t('historyTableCurrency')}
+                      {sortConfig.key === 'currencyLabelKey' && (sortConfig.direction === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />)}
+                      {sortConfig.key !== 'currencyLabelKey' && <ChevronsUpDown className="ml-1 h-3 w-3 inline opacity-30" />}
+                    </Button>
+                  </div>
+                  <div className="w-[17.5%] text-center px-2">{t('historyTableBuy')}</div>
+                  <div className="w-[17.5%] text-center px-2">{t('historyTableSell')}</div>
+                </div>
               {isHistoryLoading ? (
-                <div className="flex flex-col items-center justify-center min-h-[200px]">
+                <div className="flex flex-col items-center justify-center min-h-[calc(400px_-_theme(spacing.10))]">
                   <RefreshCw className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary mb-2" />
                   <p className="text-sm sm:text-base text-muted-foreground">{t('historyLoadingText')}</p>
                 </div>
               ) : sortedHistoricalRates.length > 0 ? (
-                <>
-                  <div className="flex items-center border-b pb-2 mb-2 text-xs font-medium text-muted-foreground">
-                    <div className="w-[35%] px-2">
-                      <Button variant="ghost" onClick={() => handleSort('date')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
-                        {t('historyTableDate')}
-                        {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />)}
-                        {sortConfig.key !== 'date' && <ChevronsUpDown className="ml-1 h-3 w-3 inline opacity-30" />}
-                      </Button>
-                    </div>
-                    <div className="w-[30%] px-2">
-                      <Button variant="ghost" onClick={() => handleSort('currencyLabelKey')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
-                        {t('historyTableCurrency')}
-                        {sortConfig.key === 'currencyLabelKey' && (sortConfig.direction === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />)}
-                        {sortConfig.key !== 'currencyLabelKey' && <ChevronsUpDown className="ml-1 h-3 w-3 inline opacity-30" />}
-                      </Button>
-                    </div>
-                    <div className="w-[17.5%] text-center px-2">{t('historyTableBuy')}</div>
-                    <div className="w-[17.5%] text-center px-3 py-2">{t('historyTableSell')}</div>
-                  </div>
-                  <div className="max-h-[calc(400px_-_theme(spacing.10))] overflow-y-auto overflow-x-auto"> 
-                    <Table>
-                      <TableBody>
-                        {sortedHistoricalRates.map((entry) => (
-                          <TableRow key={entry.id}>
-                            <TableCell className="text-xs p-2 whitespace-nowrap w-[35%]">
-                               {format(parseISO(entry.date), 'EEEE, dd/MM', { locale: dateLocale })}
-                            </TableCell>
-                            <TableCell className="text-xs p-2 w-[30%]">{t(entry.currencyLabelKey)}</TableCell>
-                            <TableCell className="text-right text-xs p-2 w-[17.5%]">
-                              {entry.buy !== null ? entry.buy.toFixed(2) : 'N/A'}
-                            </TableCell>
-                            <TableCell className="text-right text-xs px-3 py-2 w-[17.5%]">
-                              {entry.sell !== null ? entry.sell.toFixed(2) : 'N/A'}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </>
+                <div className="max-h-[calc(400px_-_theme(spacing.10))] overflow-y-auto overflow-x-auto"> 
+                  <Table>
+                    <TableBody>
+                      {sortedHistoricalRates.map((entry) => (
+                        <TableRow key={entry.id}>
+                          <TableCell className="text-xs p-2 whitespace-nowrap w-[35%]">
+                             {format(parseISO(entry.date), 'EEEE, dd/MM', { locale: dateLocale })}
+                          </TableCell>
+                          <TableCell className="text-xs p-2 w-[30%]">{t(entry.currencyLabelKey)}</TableCell>
+                          <TableCell className="text-right text-xs p-2 w-[17.5%]">
+                            {entry.buy !== null ? entry.buy.toFixed(2) : 'N/A'}
+                          </TableCell>
+                          <TableCell className="text-right text-xs px-3 py-2 w-[17.5%]">
+                            {entry.sell !== null ? entry.sell.toFixed(2) : 'N/A'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               ) : (
-                <p className="text-sm text-muted-foreground text-center min-h-[200px] flex items-center justify-center">
+                <p className="text-sm text-muted-foreground text-center min-h-[calc(400px_-_theme(spacing.10))] flex items-center justify-center">
                   {t('historyNoDataText')}
                 </p>
               )}
@@ -654,3 +660,14 @@ export default function PesoWatcherPage() {
     </div>
   );
 }
+
+
+export default function PesoWatcherPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <PesoWatcherPageContent />
+    </Suspense>
+  );
+}
+
+    
