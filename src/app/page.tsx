@@ -194,9 +194,14 @@ function PesoWatcherPageContent() {
         <div className="space-y-4">
           {newCurrencyData.USD_BLUE && newCurrencyData.quoteDate ? (
             <div>
-              <p className="flex items-center text-lg font-semibold text-primary mb-1">
-                <DollarSign className="w-5 h-5 mr-2 text-primary" /> 
-                {t('usdBlueLabel')} {t('ratesForDateText', { date: displayDate })}:
+              <p className="flex items-start text-lg font-semibold text-primary mb-1">
+                <DollarSign className="w-5 h-5 mr-2 mt-1 flex-shrink-0 text-primary" />
+                <span>
+                  {t('usdBlueLabel')}{' '}
+                  {t('modalRatesPreambleText')}
+                  <br />
+                  {displayDate}:
+                </span>
               </p>
               {newCurrencyData.USD_BLUE.compra !== null && (
                 <p className="ml-7 text-md">{t('compraShort')}: <span className="font-medium">{newCurrencyData.USD_BLUE.compra.toFixed(2)} ARS</span></p>
@@ -212,9 +217,14 @@ function PesoWatcherPageContent() {
           
           {newCurrencyData.USD_OFICIAL && newCurrencyData.quoteDate ? (
             <div>
-              <p className="flex items-center text-lg font-semibold text-primary mb-1">
-                <DollarSign className="w-5 h-5 mr-2 text-primary" /> 
-                {t('usdOficialLabel')} {t('ratesForDateText', { date: displayDate })}:
+              <p className="flex items-start text-lg font-semibold text-primary mb-1">
+                <DollarSign className="w-5 h-5 mr-2 mt-1 flex-shrink-0 text-primary" />
+                 <span>
+                  {t('usdOficialLabel')}{' '}
+                  {t('modalRatesPreambleText')}
+                  <br />
+                  {displayDate}:
+                </span>
               </p>
                {newCurrencyData.USD_OFICIAL.compra !== null && (
                 <p className="ml-7 text-md">{t('compraShort')}: <span className="font-medium">{newCurrencyData.USD_OFICIAL.compra.toFixed(2)} ARS</span></p>
@@ -230,9 +240,14 @@ function PesoWatcherPageContent() {
 
           {newCurrencyData.EUR && newCurrencyData.quoteDate ? (
             <div>
-              <p className="flex items-center text-lg font-semibold text-primary mb-1">
-                <Euro className="w-5 h-5 mr-2 text-primary" /> 
-                {t('eurLabel')} {t('ratesForDateText', { date: displayDate })}:
+              <p className="flex items-start text-lg font-semibold text-primary mb-1">
+                <Euro className="w-5 h-5 mr-2 mt-1 flex-shrink-0 text-primary" />
+                <span>
+                  {t('eurLabel')}{' '}
+                  {t('modalRatesPreambleText')}
+                  <br />
+                  {displayDate}:
+                </span>
               </p>
               {newCurrencyData.EUR.compra !== null && (
                 <p className="ml-7 text-md">{t('compraShort')}: <span className="font-medium">{newCurrencyData.EUR.compra.toFixed(2)} ARS</span></p>
@@ -670,5 +685,6 @@ export default function PesoWatcherPage() {
     </Suspense>
   );
 }
+
 
 
