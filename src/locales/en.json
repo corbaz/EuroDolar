@@ -53,6 +53,9 @@
   "historyTableBuy": "Buy",
   "historyTableSell": "Sell",
   "historyLoadingText": "Loading history...",
-  "historyNoDataText": "No historical data available for the last 10 business days."
+  "historyNoDataText": "No historical data available for the last 10 business days.",
+  "selectedDateFallback": "a selected date",
+  "dataNotAvailableOnDateSimple": "Data not available for this currency.",
+  "noExchangeRateDataSpecificShort": "{{currency}}: No data."
 }
 
