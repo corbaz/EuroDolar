@@ -565,7 +565,7 @@ export default function PesoWatcherPage() {
                   onSelect={handleCalendarDaySelect}
                   month={calendarMonth}
                   onMonthChange={setCalendarMonth}
-                  className="rounded-md border shadow-sm bg-card w-full max-w-sm mx-auto"
+                  className="rounded-md border shadow-sm bg-card w-full max-w-xs mx-auto"
                   disabled={(date) => date > new Date() || date < MIN_DATE} 
                   initialFocus
                   locale={dateLocale}
@@ -694,7 +694,7 @@ export default function PesoWatcherPage() {
                           </Button>
                         </TableHead>
                         <TableHead className="text-right text-xs p-2">{t('historyTableBuy')}</TableHead>
-                        <TableHead className="text-right text-xs p-2">{t('historyTableSell')}</TableHead>
+                        <TableHead className="text-right text-xs px-3 py-2">{t('historyTableSell')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -707,7 +707,7 @@ export default function PesoWatcherPage() {
                           <TableCell className="text-right text-xs p-2">
                             {entry.buy !== null ? entry.buy.toFixed(2) : 'N/A'}
                           </TableCell>
-                          <TableCell className="text-right text-xs p-2">
+                          <TableCell className="text-right text-xs px-3 py-2">
                             {entry.sell !== null ? entry.sell.toFixed(2) : 'N/A'}
                           </TableCell>
                         </TableRow>
