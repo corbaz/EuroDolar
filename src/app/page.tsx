@@ -338,16 +338,10 @@ export default function PesoWatcherPage() {
 
       if (date > today) {
         toast({ title: t('toastInvalidDateTitle'), description: t('toastInvalidDateDescriptionFuture'), variant: "destructive", duration: 3000 });
-        // Optionally reset selectedDate or keep previous valid date
-        // setSelectedDate(undefined); 
-        // setCurrencyData(null);
         return;
       }
       if (date < MIN_DATE) {
         toast({ title: t('toastInvalidDateTitle'), description: t('toastInvalidDateDescriptionPast', { date: format(MIN_DATE, 'P', { locale: dateLocale }) }), variant: "destructive", duration: 3000 });
-        // Optionally reset selectedDate or keep previous valid date
-        // setSelectedDate(undefined); 
-        // setCurrencyData(null);
         return;
       }
       setSelectedDate(date); 
@@ -401,7 +395,6 @@ export default function PesoWatcherPage() {
                             sell: typeof data.venta === 'number' ? data.venta : null,
                         });
                     } else {
-                        // console.warn(`No data for ${config.labelKey} on ${dateStr}: ${response.status}`);
                         historicalRates.push({
                             id: `${dateStr}-${config.labelKey}`,
                             date: dateStr,
@@ -411,7 +404,6 @@ export default function PesoWatcherPage() {
                         });
                     }
                 } catch (error) {
-                    // console.error(`Error fetching historical ${config.labelKey} for ${dateStr}:`, error);
                     historicalRates.push({
                         id: `${dateStr}-${config.labelKey}`,
                         date: dateStr,
@@ -434,7 +426,7 @@ export default function PesoWatcherPage() {
     setFlatHistoricalRates(historicalRates);
     setIsHistoryLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t, dateLocale]); // Added dateLocale dependency for format inside
+  }, [t, dateLocale]); 
 
   useEffect(() => {
     fetchHistoricalData();
@@ -464,7 +456,6 @@ export default function PesoWatcherPage() {
         const dateB = parseISO(b.date).getTime();
         const primarySort = sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
         if (primarySort !== 0) return primarySort;
-        // Secondary sort by currency order if dates are the same
         return (currencyOrder[a.currencyLabelKey] || 99) - (currencyOrder[b.currencyLabelKey] || 99);
       });
     } else if (sortConfig.key === 'currencyLabelKey') {
@@ -483,7 +474,6 @@ export default function PesoWatcherPage() {
           return currencyComparison;
         }
   
-        // Secondary sort by date (descending) if currencies are the same
         const dateA = parseISO(a.date).getTime();
         const dateB = parseISO(b.date).getTime();
         return dateB - dateA;
@@ -656,3 +646,4 @@ export default function PesoWatcherPage() {
     </div>
   );
 }
+
