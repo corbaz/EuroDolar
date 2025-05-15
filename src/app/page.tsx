@@ -24,8 +24,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table";
 
@@ -439,7 +437,7 @@ export default function PesoWatcherPage() {
       if (currentSortConfig.key === columnKey) {
         newDirection = currentSortConfig.direction === 'asc' ? 'desc' : 'asc';
       } else {
-        if (columnKey === 'date') newDirection = 'asc'; 
+        if (columnKey === 'date') newDirection = 'desc'; // Default to newest first for date
         else if (columnKey === 'currencyLabelKey') newDirection = 'asc'; 
       }
       return { key: columnKey, direction: newDirection };
@@ -476,7 +474,7 @@ export default function PesoWatcherPage() {
   
         const dateA = parseISO(a.date).getTime();
         const dateB = parseISO(b.date).getTime();
-        return dateB - dateA;
+        return dateB - dateA; // Keep newest dates first within currency sort
       });
     }
     return sortableRates;
@@ -573,46 +571,46 @@ export default function PesoWatcherPage() {
                   <p className="text-sm sm:text-base text-muted-foreground">{t('historyLoadingText')}</p>
                 </div>
               ) : sortedHistoricalRates.length > 0 ? (
-                <div className="max-h-[400px] overflow-y-auto overflow-x-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-card z-20">
-                      <TableRow>
-                        <TableHead className="text-xs p-2 cursor-pointer hover:text-primary sticky left-0 bg-card z-30">
-                          <Button variant="ghost" onClick={() => handleSort('date')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
-                            {t('historyTableDate')}
-                            {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />)}
-                            {sortConfig.key !== 'date' && <ChevronsUpDown className="ml-1 h-3 w-3 inline opacity-30" />}
-                          </Button>
-                        </TableHead>
-                        <TableHead className="text-xs p-2 cursor-pointer hover:text-primary">
-                           <Button variant="ghost" onClick={() => handleSort('currencyLabelKey')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
-                            {t('historyTableCurrency')}
-                            {sortConfig.key === 'currencyLabelKey' && (sortConfig.direction === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />)}
-                            {sortConfig.key !== 'currencyLabelKey' && <ChevronsUpDown className="ml-1 h-3 w-3 inline opacity-30" />}
-                          </Button>
-                        </TableHead>
-                        <TableHead className="text-right text-xs p-2">{t('historyTableBuy')}</TableHead>
-                        <TableHead className="text-right text-xs px-3 py-2">{t('historyTableSell')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sortedHistoricalRates.map((entry) => (
-                        <TableRow key={entry.id}>
-                          <TableCell className="text-xs p-2 whitespace-nowrap sticky left-0 bg-card z-10">
-                             {format(parseISO(entry.date), 'EEEE, dd/MM', { locale: dateLocale })}
-                          </TableCell>
-                          <TableCell className="text-xs p-2">{t(entry.currencyLabelKey)}</TableCell>
-                          <TableCell className="text-right text-xs p-2">
-                            {entry.buy !== null ? entry.buy.toFixed(2) : 'N/A'}
-                          </TableCell>
-                          <TableCell className="text-right text-xs px-3 py-2">
-                            {entry.sell !== null ? entry.sell.toFixed(2) : 'N/A'}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                <>
+                  <div className="flex items-center border-b pb-2 mb-2 text-xs font-medium text-muted-foreground">
+                    <div className="w-[35%] px-2">
+                      <Button variant="ghost" onClick={() => handleSort('date')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
+                        {t('historyTableDate')}
+                        {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />)}
+                        {sortConfig.key !== 'date' && <ChevronsUpDown className="ml-1 h-3 w-3 inline opacity-30" />}
+                      </Button>
+                    </div>
+                    <div className="w-[30%] px-2">
+                      <Button variant="ghost" onClick={() => handleSort('currencyLabelKey')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
+                        {t('historyTableCurrency')}
+                        {sortConfig.key === 'currencyLabelKey' && (sortConfig.direction === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />)}
+                        {sortConfig.key !== 'currencyLabelKey' && <ChevronsUpDown className="ml-1 h-3 w-3 inline opacity-30" />}
+                      </Button>
+                    </div>
+                    <div className="w-[17.5%] text-right px-2">{t('historyTableBuy')}</div>
+                    <div className="w-[17.5%] text-right px-3">{t('historyTableSell')}</div>
+                  </div>
+                  <div className="max-h-[calc(400px_-_theme(spacing.12))] overflow-y-auto overflow-x-auto">
+                    <Table>
+                      <TableBody>
+                        {sortedHistoricalRates.map((entry) => (
+                          <TableRow key={entry.id}>
+                            <TableCell className="text-xs p-2 whitespace-nowrap w-[35%]">
+                               {format(parseISO(entry.date), 'EEEE, dd/MM', { locale: dateLocale })}
+                            </TableCell>
+                            <TableCell className="text-xs p-2 w-[30%]">{t(entry.currencyLabelKey)}</TableCell>
+                            <TableCell className="text-right text-xs p-2 w-[17.5%]">
+                              {entry.buy !== null ? entry.buy.toFixed(2) : 'N/A'}
+                            </TableCell>
+                            <TableCell className="text-right text-xs px-3 py-2 w-[17.5%]">
+                              {entry.sell !== null ? entry.sell.toFixed(2) : 'N/A'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
               ) : (
                 <p className="text-sm text-muted-foreground text-center min-h-[200px] flex items-center justify-center">
                   {t('historyNoDataText')}
