@@ -496,71 +496,73 @@ export default function PesoWatcherPage() {
 
         <div className="w-full grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8 max-w-6xl">
           <Card className="shadow-lg rounded-xl border-border lg:col-span-2">
-            <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
-              <CardTitle className="flex items-center text-lg sm:text-xl">
+            <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6 text-center">
+              <CardTitle className="flex items-center justify-center text-lg sm:text-xl">
                 <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {t('selectDateCardTitle')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row gap-2 mb-4">
-                <Select
-                  value={calendarMonth.getFullYear().toString()}
-                  onValueChange={handleYearChange}
-                >
-                  <SelectTrigger className="w-full sm:w-[120px]">
-                    <SelectValue placeholder={t('yearSelectPlaceholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((year) => (
-                      <SelectItem key={year} value={year.toString()}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={calendarMonth.getMonth().toString()}
-                  onValueChange={handleMonthChange}
-                >
-                  <SelectTrigger className="w-full sm:w-[150px]">
-                    <SelectValue placeholder={t('monthSelectPlaceholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {localizedMonths.map((month) => (
-                      <SelectItem key={month.value} value={month.value}>
-                        {month.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="mx-auto w-full sm:w-72">
+                <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                  <Select
+                    value={calendarMonth.getFullYear().toString()}
+                    onValueChange={handleYearChange}
+                  >
+                    <SelectTrigger className="w-full sm:w-[120px]">
+                      <SelectValue placeholder={t('yearSelectPlaceholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {years.map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={calendarMonth.getMonth().toString()}
+                    onValueChange={handleMonthChange}
+                  >
+                    <SelectTrigger className="w-full sm:w-[150px]">
+                      <SelectValue placeholder={t('monthSelectPlaceholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {localizedMonths.map((month) => (
+                        <SelectItem key={month.value} value={month.value}>
+                          {month.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Calendar
+                  key={calendarMonth.toISOString()}
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleCalendarDaySelect}
+                  month={calendarMonth}
+                  onMonthChange={setCalendarMonth}
+                  className="rounded-md border shadow-sm bg-card w-full"
+                  disabled={(date) => {
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    return date > today || date < MIN_DATE;
+                  }}
+                  initialFocus
+                  locale={dateLocale}
+                  footer={
+                    <p className="text-xs sm:text-sm text-center text-muted-foreground mt-2 p-1">
+                      {selectedDate ? t('calendarFooterWithDate', { date: format(selectedDate, 'PPP', { locale: dateLocale }) }) : t('calendarFooterNoDate')}
+                    </p>
+                  }
+                />
               </div>
-              <Calendar
-                key={calendarMonth.toISOString()}
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleCalendarDaySelect}
-                month={calendarMonth}
-                onMonthChange={setCalendarMonth}
-                className="rounded-md border shadow-sm bg-card w-full max-w-xs mx-auto"
-                disabled={(date) => {
-                  const today = new Date();
-                  today.setHours(0,0,0,0);
-                  return date > today || date < MIN_DATE;
-                }}
-                initialFocus
-                locale={dateLocale}
-                footer={
-                  <p className="text-xs sm:text-sm text-center text-muted-foreground mt-2 p-1">
-                    {selectedDate ? t('calendarFooterWithDate', { date: format(selectedDate, 'PPP', { locale: dateLocale }) }) : t('calendarFooterNoDate')}
-                  </p>
-                }
-              />
             </CardContent>
           </Card>
           
           <Card className="shadow-lg rounded-xl border-border lg:col-span-3">
-            <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
-              <CardTitle className="flex items-center text-lg sm:text-xl">
+            <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6 text-center">
+              <CardTitle className="flex items-center justify-center text-lg sm:text-xl">
                 <History className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {t('historyCardTitle')}
               </CardTitle>
             </CardHeader>
@@ -588,9 +590,9 @@ export default function PesoWatcherPage() {
                       </Button>
                     </div>
                     <div className="w-[17.5%] text-right px-2">{t('historyTableBuy')}</div>
-                    <div className="w-[17.5%] text-right px-3">{t('historyTableSell')}</div>
+                    <div className="w-[17.5%] text-right px-3 py-2">{t('historyTableSell')}</div>
                   </div>
-                  <div className="max-h-[calc(400px_-_theme(spacing.12))] overflow-y-auto overflow-x-auto">
+                  <div className="max-h-[calc(400px_-_theme(spacing.12))] overflow-y-auto overflow-x-auto"> {/* Adjusted max-h and added overflow-x-auto */}
                     <Table>
                       <TableBody>
                         {sortedHistoricalRates.map((entry) => (
@@ -645,3 +647,4 @@ export default function PesoWatcherPage() {
   );
 }
 
+    
