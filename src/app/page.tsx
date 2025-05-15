@@ -57,6 +57,8 @@ interface HistoricalRateEntry {
 }
 
 const MIN_DATE = new Date("2000-01-01");
+MIN_DATE.setHours(0, 0, 0, 0); // Ensure it's start of day
+
 const MIN_CALENDAR_MONTH = startOfMonth(MIN_DATE);
 const currencyOrder: Record<CurrencyLabelKey, number> = { 'usdBlueLabel': 1, 'usdOficialLabel': 2, 'eurLabel': 3 };
 
@@ -288,7 +290,8 @@ export default function PesoWatcherPage() {
         setCalendarMonth(newCalMonth);
       }
     }
-  }, [selectedDate, calendarMonth]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
 
 
   const currentYr = new Date().getFullYear();
@@ -299,10 +302,9 @@ export default function PesoWatcherPage() {
     const currentDisplayMonth = calendarMonth.getMonth(); 
     
     let newCalendarFocusDate = startOfMonth(new Date(newYear, currentDisplayMonth, 1));
-    const todayMonthStart = startOfMonth(new Date());
     
-    if (newCalendarFocusDate > todayMonthStart) {
-        newCalendarFocusDate = todayMonthStart; 
+    if (newCalendarFocusDate.getFullYear() > new Date().getFullYear()) {
+        newCalendarFocusDate = startOfMonth(new Date(new Date().getFullYear(), currentDisplayMonth, 1));
         toast({ title: t('toastInvalidYearTitle'), description: t('toastInvalidYearDescriptionFuture'), variant: "destructive", duration: 3000 });
     } else if (newCalendarFocusDate < MIN_CALENDAR_MONTH) {
         newCalendarFocusDate = MIN_CALENDAR_MONTH; 
@@ -316,10 +318,11 @@ export default function PesoWatcherPage() {
     const currentDisplayYear = calendarMonth.getFullYear();
 
     let newCalendarFocusDate = startOfMonth(new Date(currentDisplayYear, newMonth, 1));
-    const todayMonthStart = startOfMonth(new Date());
+    const today = new Date();
+    today.setHours(0,0,0,0);
         
-    if (newCalendarFocusDate > todayMonthStart) {
-        newCalendarFocusDate = todayMonthStart;
+    if (newCalendarFocusDate > startOfMonth(today)) {
+        newCalendarFocusDate = startOfMonth(today);
         toast({ title: t('toastInvalidMonthTitle'), description: t('toastInvalidMonthDescriptionFuture'), variant: "destructive", duration: 3000 });
     } else if (newCalendarFocusDate < MIN_CALENDAR_MONTH) {
         newCalendarFocusDate = MIN_CALENDAR_MONTH;
@@ -330,16 +333,21 @@ export default function PesoWatcherPage() {
 
   const handleCalendarDaySelect = (date: Date | undefined) => {
     if (date) {
-      if (date > new Date()) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Normalize today to start of day
+
+      if (date > today) {
         toast({ title: t('toastInvalidDateTitle'), description: t('toastInvalidDateDescriptionFuture'), variant: "destructive", duration: 3000 });
-        setSelectedDate(undefined); 
-        setCurrencyData(null);
+        // Optionally reset selectedDate or keep previous valid date
+        // setSelectedDate(undefined); 
+        // setCurrencyData(null);
         return;
       }
       if (date < MIN_DATE) {
         toast({ title: t('toastInvalidDateTitle'), description: t('toastInvalidDateDescriptionPast', { date: format(MIN_DATE, 'P', { locale: dateLocale }) }), variant: "destructive", duration: 3000 });
-        setSelectedDate(undefined); 
-        setCurrencyData(null);
+        // Optionally reset selectedDate or keep previous valid date
+        // setSelectedDate(undefined); 
+        // setCurrencyData(null);
         return;
       }
       setSelectedDate(date); 
@@ -359,10 +367,10 @@ export default function PesoWatcherPage() {
     setIsHistoryLoading(true);
     const historicalRates: HistoricalRateEntry[] = [];
     const today = new Date();
-    let currentDate = subDays(today, 1); 
+    today.setHours(0,0,0,0);
+    let currentDateIter = subDays(today, 1); 
     const targetDays = 10;
-    const fetchedDaysCount = 0;
-    const attemptedDates: string[] = []; // To keep track of dates we attempt to fetch for.
+    const attemptedDates: string[] = []; 
 
     const currencyConfigs: {
       labelKey: CurrencyLabelKey;
@@ -373,12 +381,12 @@ export default function PesoWatcherPage() {
       { labelKey: 'eurLabel', path: 'eur' },
     ];
 
-    while (attemptedDates.length < targetDays && currentDate >= MIN_DATE) {
-        if (!isWeekend(currentDate)) {
-            attemptedDates.push(format(currentDate, 'yyyy-MM-dd')); // Track that we're attempting this day
+    while (attemptedDates.length < targetDays && currentDateIter >= MIN_DATE) {
+        if (!isWeekend(currentDateIter)) {
+            attemptedDates.push(format(currentDateIter, 'yyyy-MM-dd')); 
 
-            const datePath = format(currentDate, 'yyyy/MM/dd');
-            const dateStr = format(currentDate, 'yyyy-MM-dd');
+            const datePath = format(currentDateIter, 'yyyy/MM/dd');
+            const dateStr = format(currentDateIter, 'yyyy-MM-dd');
 
             for (const config of currencyConfigs) {
                 try {
@@ -393,7 +401,7 @@ export default function PesoWatcherPage() {
                             sell: typeof data.venta === 'number' ? data.venta : null,
                         });
                     } else {
-                        console.warn(`No data for ${config.labelKey} on ${dateStr}: ${response.status}`);
+                        // console.warn(`No data for ${config.labelKey} on ${dateStr}: ${response.status}`);
                         historicalRates.push({
                             id: `${dateStr}-${config.labelKey}`,
                             date: dateStr,
@@ -403,7 +411,7 @@ export default function PesoWatcherPage() {
                         });
                     }
                 } catch (error) {
-                    console.error(`Error fetching historical ${config.labelKey} for ${dateStr}:`, error);
+                    // console.error(`Error fetching historical ${config.labelKey} for ${dateStr}:`, error);
                     historicalRates.push({
                         id: `${dateStr}-${config.labelKey}`,
                         date: dateStr,
@@ -414,7 +422,7 @@ export default function PesoWatcherPage() {
                 }
             }
         }
-        currentDate = subDays(currentDate, 1);
+        currentDateIter = subDays(currentDateIter, 1);
     }
     
     historicalRates.sort((a, b) => {
@@ -426,7 +434,7 @@ export default function PesoWatcherPage() {
     setFlatHistoricalRates(historicalRates);
     setIsHistoryLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t]); 
+  }, [t, dateLocale]); // Added dateLocale dependency for format inside
 
   useEffect(() => {
     fetchHistoricalData();
@@ -454,11 +462,10 @@ export default function PesoWatcherPage() {
       sortableRates.sort((a, b) => {
         const dateA = parseISO(a.date).getTime();
         const dateB = parseISO(b.date).getTime();
-        if (sortConfig.direction === 'asc') {
-          return dateA - dateB;
-        } else {
-          return dateB - dateA;
-        }
+        const primarySort = sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
+        if (primarySort !== 0) return primarySort;
+        // Secondary sort by currency order if dates are the same
+        return (currencyOrder[a.currencyLabelKey] || 99) - (currencyOrder[b.currencyLabelKey] || 99);
       });
     } else if (sortConfig.key === 'currencyLabelKey') {
       sortableRates.sort((a, b) => {
@@ -476,6 +483,7 @@ export default function PesoWatcherPage() {
           return currencyComparison;
         }
   
+        // Secondary sort by date (descending) if currencies are the same
         const dateA = parseISO(a.date).getTime();
         const dateB = parseISO(b.date).getTime();
         return dateB - dateA;
@@ -499,7 +507,7 @@ export default function PesoWatcherPage() {
         </header>
 
         <div className="w-full grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8 max-w-6xl">
-          <Card className="shadow-lg rounded-xl overflow-hidden border-border lg:col-span-2">
+          <Card className="shadow-lg rounded-xl border-border lg:col-span-2">
             <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
               <CardTitle className="flex items-center text-lg sm:text-xl">
                 <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {t('selectDateCardTitle')}
@@ -546,7 +554,11 @@ export default function PesoWatcherPage() {
                 month={calendarMonth}
                 onMonthChange={setCalendarMonth}
                 className="rounded-md border shadow-sm bg-card w-full max-w-xs mx-auto"
-                disabled={(date) => date > new Date() || date < MIN_DATE} 
+                disabled={(date) => {
+                  const today = new Date();
+                  today.setHours(0,0,0,0);
+                  return date > today || date < MIN_DATE;
+                }}
                 initialFocus
                 locale={dateLocale}
                 footer={
@@ -558,7 +570,7 @@ export default function PesoWatcherPage() {
             </CardContent>
           </Card>
           
-          <Card className="shadow-lg rounded-xl overflow-hidden border-border lg:col-span-3">
+          <Card className="shadow-lg rounded-xl border-border lg:col-span-3">
             <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
               <CardTitle className="flex items-center text-lg sm:text-xl">
                 <History className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {t('historyCardTitle')}
@@ -573,9 +585,9 @@ export default function PesoWatcherPage() {
               ) : sortedHistoricalRates.length > 0 ? (
                 <div className="max-h-[400px] overflow-y-auto overflow-x-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-0 bg-card z-20">
                       <TableRow>
-                        <TableHead className="text-xs p-2 cursor-pointer hover:text-primary sticky left-0 bg-card z-10">
+                        <TableHead className="text-xs p-2 cursor-pointer hover:text-primary sticky left-0 bg-card z-30">
                           <Button variant="ghost" onClick={() => handleSort('date')} className="p-0 h-auto hover:bg-transparent text-xs font-medium text-muted-foreground hover:text-primary">
                             {t('historyTableDate')}
                             {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />)}
@@ -596,7 +608,7 @@ export default function PesoWatcherPage() {
                     <TableBody>
                       {sortedHistoricalRates.map((entry) => (
                         <TableRow key={entry.id}>
-                          <TableCell className="text-xs p-2 whitespace-nowrap sticky left-0 bg-card z-0">
+                          <TableCell className="text-xs p-2 whitespace-nowrap sticky left-0 bg-card z-10">
                              {format(parseISO(entry.date), 'EEEE, dd/MM', { locale: dateLocale })}
                           </TableCell>
                           <TableCell className="text-xs p-2">{t(entry.currencyLabelKey)}</TableCell>
@@ -644,5 +656,3 @@ export default function PesoWatcherPage() {
     </div>
   );
 }
-
-    
