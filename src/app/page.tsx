@@ -502,7 +502,7 @@ export default function PesoWatcherPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
-              <div className="mx-auto w-full sm:w-[278px]">
+              <div className="mx-auto w-full max-w-xs sm:max-w-none sm:w-[278px]">
                 <div className="flex flex-row gap-2 mb-4">
                   <Select
                     value={calendarMonth.getFullYear().toString()}
@@ -646,3 +646,5 @@ export default function PesoWatcherPage() {
     </div>
   );
 }
+
+    
