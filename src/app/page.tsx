@@ -639,7 +639,7 @@ function PesoWatcherPageContent() {
 
         {modalContent && (
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogContent className="sm:max-w-md bg-card text-card-foreground rounded-xl shadow-xl border-border">
+            <DialogContent className="sm:max-w-md bg-card text-card-foreground rounded-xl shadow-xl border-border px-4 sm:px-6">
               <DialogHeader className="p-6 pb-4 border-b border-border">
                 <DialogTitle className="text-xl sm:text-2xl text-primary">{modalContent.title}</DialogTitle>
               </DialogHeader>
