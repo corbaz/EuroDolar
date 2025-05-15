@@ -4,7 +4,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { format, parse, isValid, startOfMonth, subDays, isWeekend, parseISO } from 'date-fns';
-import { Calendar as CalendarIcon, DollarSign, Euro, RefreshCw, History, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react';
+import { Calendar as CalendarIcon, DollarSign, Euro, History, ArrowUp, ArrowDown, ChevronsUpDown, RefreshCw } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -62,6 +63,8 @@ const currencyOrder: Record<CurrencyLabelKey, number> = { 'usdBlueLabel': 1, 'us
 
 
 export default function PesoWatcherPage() {
+  const searchParams = useSearchParams(); 
+
   const { t, dateLocale } = useLanguage();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [calendarMonth, setCalendarMonth] = useState<Date>(startOfMonth(new Date()));
@@ -93,13 +96,13 @@ export default function PesoWatcherPage() {
 
       const formattedDateForStorage = format(selectedDate, 'yyyy-MM-dd');
       const formattedDateForPath = format(selectedDate, 'yyyy/MM/dd');
+      const { year, month, day } = { year: format(selectedDate, 'yyyy'), month: format(selectedDate, 'MM'), day: format(selectedDate, 'dd') };
       
       let usdBlueValues: UsdQuote | null = null;
       let usdOficialValues: UsdQuote | null = null;
       let eurValues: UsdQuote | null = null;
       const errors: string[] = [];
 
-      // Fetch USD Blue data
       try {
         const usdBlueResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/blue/${formattedDateForPath}`);
         if (usdBlueResponse.ok) {
@@ -118,7 +121,6 @@ export default function PesoWatcherPage() {
           errors.push(`USD (Blue) API Fetch Error (${format(selectedDate, 'P', { locale: dateLocale })}): ${error.message || 'Network error'}`);
       }
 
-      // Fetch USD Oficial data
       try {
         const usdOficialResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/oficial/${formattedDateForPath}`);
         if (usdOficialResponse.ok) {
@@ -137,9 +139,7 @@ export default function PesoWatcherPage() {
           errors.push(`USD (Oficial) API Fetch Error (${format(selectedDate, 'P', { locale: dateLocale })}): ${error.message || 'Network error'}`);
       }
       
-      // Fetch EUR data
       try {
-        const { year, month, day } = { year: format(selectedDate, 'yyyy'), month: format(selectedDate, 'MM'), day: format(selectedDate, 'dd') };
         const eurResponse = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/eur/${year}/${month}/${day}`);
         if (eurResponse.ok) {
           const data = await eurResponse.json();
@@ -183,7 +183,6 @@ export default function PesoWatcherPage() {
       
       const modalDescription = (
         <div className="space-y-4">
-          {/* USD Blue */}
           {newCurrencyData.USD_BLUE && newCurrencyData.quoteDate ? (
             <div>
               <p className="flex items-center text-lg font-semibold text-primary mb-1">
@@ -202,7 +201,6 @@ export default function PesoWatcherPage() {
             </div>
           ) : <p className="flex items-center text-muted-foreground"><DollarSign className="w-5 h-5 mr-2" /> {t('dataNotAvailableOnDate', { currency: t('usdBlueLabel') })}</p>}
           
-          {/* USD Oficial */}
           {newCurrencyData.USD_OFICIAL && newCurrencyData.quoteDate ? (
             <div>
               <p className="flex items-center text-lg font-semibold text-primary mb-1">
@@ -221,7 +219,6 @@ export default function PesoWatcherPage() {
             </div>
           ) : <p className="flex items-center text-muted-foreground"><DollarSign className="w-5 h-5 mr-2" /> {t('dataNotAvailableOnDate', { currency: t('usdOficialLabel') })}</p>}
 
-          {/* EUR */}
           {newCurrencyData.EUR && newCurrencyData.quoteDate ? (
             <div>
               <p className="flex items-center text-lg font-semibold text-primary mb-1">
@@ -333,7 +330,7 @@ export default function PesoWatcherPage() {
   const handleCalendarDaySelect = (date: Date | undefined) => {
     if (date) {
       const today = new Date();
-      today.setHours(0, 0, 0, 0); // Normalize today to start of day
+      today.setHours(0, 0, 0, 0);
 
       if (date > today) {
         toast({ title: t('toastInvalidDateTitle'), description: t('toastInvalidDateDescriptionFuture'), variant: "destructive", duration: 3000 });
@@ -400,7 +397,6 @@ export default function PesoWatcherPage() {
                             sell: typeof data.venta === 'number' ? data.venta : null,
                         });
                     } else {
-                        // Push entry with nulls if API call fails or returns non-OK status
                         historicalRates.push({
                             id: `${dateStr}-${config.labelKey}`,
                             date: dateStr,
@@ -410,7 +406,6 @@ export default function PesoWatcherPage() {
                         });
                     }
                 } catch (error) {
-                     // Push entry with nulls on network or other errors
                     historicalRates.push({
                         id: `${dateStr}-${config.labelKey}`,
                         date: dateStr,
@@ -424,7 +419,6 @@ export default function PesoWatcherPage() {
         currentDateIter = subDays(currentDateIter, 1);
     }
     
-    // Sort by date descending, then by predefined currency order
     historicalRates.sort((a, b) => {
         if (a.date > b.date) return -1;
         if (a.date < b.date) return 1;
@@ -604,7 +598,7 @@ export default function PesoWatcherPage() {
                       </Button>
                     </div>
                     <div className="w-[17.5%] text-center px-2">{t('historyTableBuy')}</div>
-                    <div className="w-[17.5%] text-center px-2">{t('historyTableSell')}</div>
+                    <div className="w-[17.5%] text-center px-3 py-2">{t('historyTableSell')}</div>
                   </div>
                   <div className="max-h-[calc(400px_-_theme(spacing.10))] overflow-y-auto overflow-x-auto"> 
                     <Table>
@@ -660,5 +654,3 @@ export default function PesoWatcherPage() {
     </div>
   );
 }
-
-    
