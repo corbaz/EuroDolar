@@ -518,7 +518,10 @@ function PesoWatcherPageContent() {
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary mt-4 sm:mt-0">{t('headerTitle')}</h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 max-w-lg mx-auto">
-            {t('headerSubtitle')}
+            {t('headerSubtitle1')}
+          </p>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 max-w-lg mx-auto">
+            {t('headerSubtitle2')}
           </p>
         </header>
 
