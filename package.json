@@ -9,6 +9,7 @@
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "docs-delete": "rmdir /s /q docs",
     "build": "next build",
+    "export": "next export",
     "build:github": "cross-env GITHUB_PAGES=true next build",
     "build:render": "cross-env RENDER=true next build",
     "start": "next start",
