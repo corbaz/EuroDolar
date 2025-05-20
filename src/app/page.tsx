@@ -172,7 +172,7 @@ function PesoWatcherPageContent() {
           title: t('apiErrorsTitle'),
           description: (
               <div className="max-h-40 overflow-y-auto">
-                  {errors.map((e, i) => <p key={i}>{t('apiErrorsDescriptionItem', { error: e })}</p>)}
+                  {errors.map((e) => <p key={`error-${e.slice(0, 20)}`}>{t('apiErrorsDescriptionItem', { error: e })}</p>)}
               </div>
           ),
           variant: "destructive",

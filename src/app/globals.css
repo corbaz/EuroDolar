@@ -1,6 +1,9 @@
 
+/* postcss-ignore-next */
 @tailwind base;
+/* postcss-ignore-next */
 @tailwind components;
+/* postcss-ignore-next */
 @tailwind utilities;
 
 body {
