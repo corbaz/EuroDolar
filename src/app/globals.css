@@ -1,4 +1,3 @@
-
 @tailwind base;
 
 @tailwind components;
@@ -11,33 +10,49 @@ body {
 
 @layer base {
   :root {
-    --background: 200 20% 96%; /* Lighter Grayish-blue for overall page background */
-    --foreground: 210 25% 15%; /* Dark blue/black for text */
+    --background: 200 20% 96%;
+    /* Lighter Grayish-blue for overall page background */
+    --foreground: 210 25% 15%;
+    /* Dark blue/black for text */
 
-    --card: 190 67% 93%; /* Light blue for card backgrounds */
-    --card-foreground: 210 25% 15%; /* Text on cards */
+    --card: 190 67% 93%;
+    /* Light blue for card backgrounds */
+    --card-foreground: 210 25% 15%;
+    /* Text on cards */
 
-    --popover: 190 67% 90%; /* Slightly darker Light blue for popovers */
+    --popover: 190 67% 90%;
+    /* Slightly darker Light blue for popovers */
     --popover-foreground: 210 25% 15%;
 
-    --primary: 120 39% 49%; /* Green for primary actions (buttons, highlights) */
-    --primary-foreground: 0 0% 100%; /* White text on green primary elements */
+    --primary: 120 39% 49%;
+    /* Green for primary actions (buttons, highlights) */
+    --primary-foreground: 0 0% 100%;
+    /* White text on green primary elements */
 
-    --secondary: 200 17% 85%; /* Grayish-blue for secondary buttons/elements */
-    --secondary-foreground: 210 25% 15%; /* Text on secondary elements */
+    --secondary: 200 17% 85%;
+    /* Grayish-blue for secondary buttons/elements */
+    --secondary-foreground: 210 25% 15%;
+    /* Text on secondary elements */
 
-    --muted: 200 17% 90%; /* Grayish-blue for muted text, backgrounds, borders */
-    --muted-foreground: 200 17% 45%; /* Text on muted backgrounds */
+    --muted: 200 17% 90%;
+    /* Grayish-blue for muted text, backgrounds, borders */
+    --muted-foreground: 200 17% 45%;
+    /* Text on muted backgrounds */
 
-    --accent: 120 39% 49%; /* Green for accent (can be same as primary or different) */
+    --accent: 120 39% 49%;
+    /* Green for accent (can be same as primary or different) */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%; /* A clear red for destructive actions */
+    --destructive: 0 72% 51%;
+    /* A clear red for destructive actions */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 200 17% 80%; /* Grayish-blue for borders */
-    --input: 200 17% 90%; /* Grayish-blue for input backgrounds */
-    --ring: 120 39% 55%; /* Lighter Green for focus rings, for accessibility */
+    --border: 200 17% 80%;
+    /* Grayish-blue for borders */
+    --input: 200 17% 90%;
+    /* Grayish-blue for input backgrounds */
+    --ring: 120 39% 55%;
+    /* Lighter Green for focus rings, for accessibility */
 
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -57,19 +72,20 @@ body {
   }
 
   .dark {
-    --background: 210 20% 12%; 
-    --foreground: 200 15% 90%; 
+    --background: 210 20% 12%;
+    --foreground: 200 15% 90%;
 
-    --card: 210 20% 18%; 
+    --card: 210 20% 18%;
     --card-foreground: 200 15% 90%;
 
-    --popover: 210 20% 15%; 
+    --popover: 210 20% 15%;
     --popover-foreground: 200 15% 90%;
 
-    --primary: 120 39% 55%; /* Lighter Green for dark mode */
-    --primary-foreground: 210 40% 5%; 
+    --primary: 120 39% 55%;
+    /* Lighter Green for dark mode */
+    --primary-foreground: 210 40% 5%;
 
-    --secondary: 210 20% 25%; 
+    --secondary: 210 20% 25%;
     --secondary-foreground: 200 15% 90%;
 
     --muted: 210 20% 25%;
@@ -78,13 +94,14 @@ body {
     --accent: 120 39% 55%;
     --accent-foreground: 210 40% 5%;
 
-    --destructive: 0 63% 45%; /* Adjusted dark red */
+    --destructive: 0 63% 45%;
+    /* Adjusted dark red */
     --destructive-foreground: 0 0% 98%;
 
     --border: 210 20% 30%;
     --input: 210 20% 28%;
-    --ring: 120 39% 60%; 
-    
+    --ring: 120 39% 60%;
+
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -102,10 +119,72 @@ body {
   }
 }
 
+/* Animación de pulsación para botones de ordenamiento */
+@keyframes button-pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.sort-button-active {
+  animation: button-pulse 0.3s ease-in-out;
+  color: hsl(var(--primary));
+}
+
+/* Animación para elementos en la tabla al ordenarse */
+@keyframes table-row-transition {
+  0% {
+    opacity: 0.5;
+    transform: translateY(5px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.table-row-animated {
+  animation: table-row-transition 0.3s ease-out;
+}
+
+/* Estilos para el efecto de ordenación de tabla */
+@keyframes table-sort-flash {
+  0% {
+    background-color: hsl(var(--accent) / 0.05);
+  }
+
+  50% {
+    background-color: hsl(var(--accent) / 0.2);
+  }
+
+  100% {
+    background-color: transparent;
+  }
+}
+
+.table-sort-flash {
+  animation: table-sort-flash 0.5s ease-out;
+}
+
+/* Añadir transición de desplazamiento suave para elementos con scroll */
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
