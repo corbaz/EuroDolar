@@ -27,6 +27,7 @@ import {
   TableCell,
   TableRow,
 } from "@/components/ui/table";
+import { CurrencyBg } from "@/components/ui/currency-bg";
 
 interface UsdQuote {
   compra: number | null;
@@ -625,21 +626,23 @@ function PesoWatcherPageContent() {
                   <RefreshCw className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary mb-2" />
                   <p className="text-sm sm:text-base text-muted-foreground">{t('historyLoadingText')}</p>
                 </div>
-              ) : sortedHistoricalRates.length > 0 ? (
-                <div className="max-h-[calc(400px_-_theme(spacing.10))] overflow-y-auto overflow-x-auto"> 
-                  <Table>
+              ) : sortedHistoricalRates.length > 0 ? (                <div className="max-h-[calc(400px_-_theme(spacing.10))] overflow-y-auto overflow-x-auto px-0.5"> 
+                  <Table className="border-separate border-spacing-y-1">
                     <TableBody>
                       {sortedHistoricalRates.map((entry) => (
-                        <TableRow key={entry.id}>
-                          <TableCell className="text-xs p-2 whitespace-nowrap w-[35%]">
-                             {format(parseISO(entry.date), 'EEEE, dd/MM', { locale: dateLocale })}
-                          </TableCell>
-                          <TableCell className="text-xs p-2 w-[30%]">{t(entry.currencyLabelKey)}</TableCell>
-                          <TableCell className="text-right text-xs p-2 w-[17.5%]">
-                            {entry.buy !== null ? entry.buy.toFixed(2) : 'N/A'}
-                          </TableCell>
-                          <TableCell className="text-right text-xs px-3 py-2 w-[17.5%]">
-                            {entry.sell !== null ? entry.sell.toFixed(2) : 'N/A'}
+                        <TableRow key={entry.id} className="p-0 border-b-0">
+                          <TableCell colSpan={4} className="p-0 py-1">                            <CurrencyBg currencyType={entry.currencyLabelKey} className="flex flex-row items-center rounded-lg py-2">
+                              <div className="text-xs p-2 pl-3 whitespace-nowrap w-[35%]">
+                                {format(parseISO(entry.date), 'EEEE, dd/MM', { locale: dateLocale })}
+                              </div>
+                              <div className="text-xs p-2 w-[30%] font-medium">{t(entry.currencyLabelKey)}</div>
+                              <div className="text-right text-xs p-2 w-[17.5%] font-mono">
+                                {entry.buy !== null ? entry.buy.toFixed(2) : 'N/A'}
+                              </div>
+                              <div className="text-right text-xs px-3 py-2 w-[17.5%] font-mono">
+                                {entry.sell !== null ? entry.sell.toFixed(2) : 'N/A'}
+                              </div>
+                            </CurrencyBg>
                           </TableCell>
                         </TableRow>
                       ))}
