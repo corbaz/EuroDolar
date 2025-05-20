@@ -1,7 +1,7 @@
 name: Deploy to GitHub Pages
 
 on:
-  # Ejecutar en commits a main
+  # Ejecutar en commits a master
   push:
     branches: [ master ]
   # Permite ejecutarlo manualmente
@@ -37,7 +37,7 @@ jobs:
         run: npm ci
         
       - name: Build with GitHub Pages configuration
-        run: npm run build:github
+        run: npm run build
         env:
           GITHUB_PAGES: true
           
