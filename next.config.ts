@@ -1,12 +1,19 @@
 import type { NextConfig } from "next";
 
+// Determinar el entorno de despliegue
+const isGitHubPages = process.env.GITHUB_PAGES === "true";
+const isRender = process.env.RENDER === "true";
+
 const nextConfig: NextConfig = {
     /* config options here */
     output: "export",
-    // Optional: Change links `/me` -> `/me/` and emit `/me.html` -> `/me/index.html`
     trailingSlash: true,
-
     distDir: "docs",
+
+    // Configuración basada en el entorno
+    basePath: isGitHubPages ? "/EuroDolar" : "",
+    assetPrefix: isGitHubPages ? "/EuroDolar/" : "",
+
     typescript: {
         ignoreBuildErrors: true,
     },
@@ -24,8 +31,6 @@ const nextConfig: NextConfig = {
         ],
         unoptimized: true,
     },
-    // Asegurar que los archivos estáticos se copian correctamente
-    assetPrefix: "/",
 };
 
 export default nextConfig;
