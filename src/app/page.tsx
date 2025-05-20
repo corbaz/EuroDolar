@@ -190,11 +190,10 @@ function PesoWatcherPageContent() {
 
       const modalDialogTitle = t('modalTitle');
       const displayDate = newCurrencyData.quoteDate ? format(parse(newCurrencyData.quoteDate, 'yyyy-MM-dd', new Date()), 'PPP', { locale: dateLocale }) : (selectedDate ? format(selectedDate, 'PPP', { locale: dateLocale }) : t('selectedDateFallback'));
-      
-      const modalDescription = (
+        const modalDescription = (
         <div className="space-y-4">
           {newCurrencyData.USD_BLUE && newCurrencyData.quoteDate ? (
-            <div>
+            <CurrencyBg currencyType="usdBlueLabel" className="p-3 rounded-lg">
               <p className="flex items-start text-lg font-semibold text-primary mb-1">
                 <DollarSign className="w-5 h-5 mr-2 mt-1 flex-shrink-0 text-primary" />
                 <span>
@@ -205,19 +204,18 @@ function PesoWatcherPageContent() {
                 </span>
               </p>
               {newCurrencyData.USD_BLUE.compra !== null && (
-                <p className="ml-7 text-md">{t('compraShort')}: <span className="font-medium">{newCurrencyData.USD_BLUE.compra.toFixed(2)} ARS</span></p>
+                <p className="ml-7 text-md">{t('compraShort')}: <span className="font-medium font-mono">{newCurrencyData.USD_BLUE.compra.toFixed(2)} ARS</span></p>
               )}
               {newCurrencyData.USD_BLUE.venta !== null && (
-                <p className="ml-7 text-md">{t('ventaShort')}: <span className="font-medium">{newCurrencyData.USD_BLUE.venta.toFixed(2)} ARS</span></p>
+                <p className="ml-7 text-md">{t('ventaShort')}: <span className="font-medium font-mono">{newCurrencyData.USD_BLUE.venta.toFixed(2)} ARS</span></p>
               )}
                {(newCurrencyData.USD_BLUE.compra === null && newCurrencyData.USD_BLUE.venta === null) && (
                 <p className="ml-7 text-sm text-muted-foreground">{t('dataNotAvailableOnDate', { currency: t('usdBlueLabel') })}</p>
               )}
-            </div>
+            </CurrencyBg>
           ) : <p className="flex items-center text-muted-foreground"><DollarSign className="w-5 h-5 mr-2" /> {t('dataNotAvailableOnDate', { currency: t('usdBlueLabel') })}</p>}
-          
-          {newCurrencyData.USD_OFICIAL && newCurrencyData.quoteDate ? (
-            <div>
+            {newCurrencyData.USD_OFICIAL && newCurrencyData.quoteDate ? (
+            <CurrencyBg currencyType="usdOficialLabel" className="p-3 rounded-lg">
               <p className="flex items-start text-lg font-semibold text-primary mb-1">
                 <DollarSign className="w-5 h-5 mr-2 mt-1 flex-shrink-0 text-primary" />
                  <span>
@@ -228,19 +226,17 @@ function PesoWatcherPageContent() {
                 </span>
               </p>
                {newCurrencyData.USD_OFICIAL.compra !== null && (
-                <p className="ml-7 text-md">{t('compraShort')}: <span className="font-medium">{newCurrencyData.USD_OFICIAL.compra.toFixed(2)} ARS</span></p>
+                <p className="ml-7 text-md">{t('compraShort')}: <span className="font-medium font-mono">{newCurrencyData.USD_OFICIAL.compra.toFixed(2)} ARS</span></p>
               )}
               {newCurrencyData.USD_OFICIAL.venta !== null && (
-                <p className="ml-7 text-md">{t('ventaShort')}: <span className="font-medium">{newCurrencyData.USD_OFICIAL.venta.toFixed(2)} ARS</span></p>
+                <p className="ml-7 text-md">{t('ventaShort')}: <span className="font-medium font-mono">{newCurrencyData.USD_OFICIAL.venta.toFixed(2)} ARS</span></p>
               )}
               {(newCurrencyData.USD_OFICIAL.compra === null && newCurrencyData.USD_OFICIAL.venta === null) && (
                 <p className="ml-7 text-sm text-muted-foreground">{t('dataNotAvailableOnDate', { currency: t('usdOficialLabel') })}</p>
               )}
-            </div>
-          ) : <p className="flex items-center text-muted-foreground"><DollarSign className="w-5 h-5 mr-2" /> {t('dataNotAvailableOnDate', { currency: t('usdOficialLabel') })}</p>}
-
-          {newCurrencyData.EUR && newCurrencyData.quoteDate ? (
-            <div>
+            </CurrencyBg>
+          ) : <p className="flex items-center text-muted-foreground"><DollarSign className="w-5 h-5 mr-2" /> {t('dataNotAvailableOnDate', { currency: t('usdOficialLabel') })}</p>}          {newCurrencyData.EUR && newCurrencyData.quoteDate ? (
+            <CurrencyBg currencyType="eurLabel" className="p-3 rounded-lg">
               <p className="flex items-start text-lg font-semibold text-primary mb-1">
                 <Euro className="w-5 h-5 mr-2 mt-1 flex-shrink-0 text-primary" />
                 <span>
@@ -251,15 +247,15 @@ function PesoWatcherPageContent() {
                 </span>
               </p>
               {newCurrencyData.EUR.compra !== null && (
-                <p className="ml-7 text-md">{t('compraShort')}: <span className="font-medium">{newCurrencyData.EUR.compra.toFixed(2)} ARS</span></p>
+                <p className="ml-7 text-md">{t('compraShort')}: <span className="font-medium font-mono">{newCurrencyData.EUR.compra.toFixed(2)} ARS</span></p>
               )}
               {newCurrencyData.EUR.venta !== null && (
-                <p className="ml-7 text-md">{t('ventaShort')}: <span className="font-medium">{newCurrencyData.EUR.venta.toFixed(2)} ARS</span></p>
+                <p className="ml-7 text-md">{t('ventaShort')}: <span className="font-medium font-mono">{newCurrencyData.EUR.venta.toFixed(2)} ARS</span></p>
               )}
               {(newCurrencyData.EUR.compra === null && newCurrencyData.EUR.venta === null) && (
                  <p className="ml-7 text-sm text-muted-foreground">{t('dataNotAvailableOnDate', { currency: t('eurLabel') })}</p>
               )}
-            </div>
+            </CurrencyBg>
           ) : <p className="flex items-center text-muted-foreground"><Euro className="w-5 h-5 mr-2" /> {t('dataNotAvailableOnDate', { currency: t('eurLabel') })}</p>}
 
 
