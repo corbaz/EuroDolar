@@ -11,11 +11,11 @@ interface CurrencyBgProps {
 // Objeto con las clases de color de fondo para cada tipo de moneda usando clases de Tailwind directas
 const currencyBgClasses = {
     usdBlueLabel:
-        "bg-blue-100 hover:bg-blue-200 border-4 border-blue-400",
+        "bg-blue-100 hover:bg-blue-200 border-4 border-blue-400 pr-3",
     usdOficialLabel:
-        "bg-emerald-100 hover:bg-emerald-200 border-4 border-emerald-400",
+        "bg-emerald-100 hover:bg-emerald-200 border-4 border-emerald-400 pr-3",
     eurLabel:
-        "bg-violet-100 hover:bg-violet-200 border-4 border-violet-400",
+        "bg-violet-100 hover:bg-violet-200 border-4 border-violet-400 pr-3",
 };
 
 export function CurrencyBg({
