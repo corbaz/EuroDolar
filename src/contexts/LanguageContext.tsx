@@ -2,7 +2,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { Locale as DateFnsLocale } from 'date-fns';
 import { enUS as enUSLocale, es as esLocale } from 'date-fns/locale';
 import enTranslations from '@/locales/en.json';
@@ -30,8 +30,21 @@ const dateLocales: Record<AppLocale, DateFnsLocale> = {
   es: esLocale,
 };
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<AppLocale>('en'); // Default to English
+interface LanguageProviderProps {
+  readonly children: ReactNode;
+}
+
+export function LanguageProvider({ children }: LanguageProviderProps) {
+  // Destructure useState directly as required by the linter
+  const [locale, setLocale] = useState<AppLocale>('es'); // Default to Spanish
+
+  // This function needs to be defined before it's used in the useEffect
+  const setLocaleState = useCallback((storedLocale: AppLocale) => {
+    if (Object.keys(availableTranslations).includes(storedLocale)) {
+      setLocale(storedLocale);
+      document.documentElement.lang = storedLocale;
+    }
+  }, []);
 
   useEffect(() => {
     const storedLocale = localStorage.getItem('appLocale') as AppLocale | null;
@@ -39,11 +52,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       setLocaleState(storedLocale);
     }
     // Set initial document lang attribute
-    document.documentElement.lang = storedLocale || 'en';
+    document.documentElement.lang = storedLocale ?? 'en';
   }, []);
 
-  const setLocale = useCallback((newLocale: AppLocale) => {
-    setLocaleState(newLocale);
+  const handleSetLocale = useCallback((newLocale: AppLocale) => {
+    setLocale(newLocale);
     localStorage.setItem('appLocale', newLocale);
     document.documentElement.lang = newLocale;
   }, []);
@@ -53,7 +66,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (replacements) {
       Object.keys(replacements).forEach(rKey => {
         const value = replacements[rKey];
-        translation = translation.replace(`{{${rKey}}}`, String(value !== undefined ? value : ''));
+        translation = translation.replace(`{{${rKey}}}`, String(value ?? ''));
       });
     }
     return translation;
@@ -65,8 +78,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const dateLocale = dateLocales[locale] || enUSLocale;
 
+  const contextValue = useMemo(() => ({
+    locale, 
+    setLocale: handleSetLocale, 
+    t, 
+    dateLocale
+  }), [locale, handleSetLocale, t, dateLocale]);
+
   return (
-    <LanguageContext.Provider value={{ locale, setLocale, t, dateLocale }}>
+    <LanguageContext.Provider value={contextValue}>
       {children}
     </LanguageContext.Provider>
   );
@@ -79,3 +99,4 @@ export function useLanguage() {
   }
   return context;
 }
+
