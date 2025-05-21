@@ -1,29 +1,24 @@
+"use client";
 
-'use client';
-
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function LanguageSwitcher() {
-  const { locale, setLocale, t } = useLanguage();
-  const isSpanish = locale === 'es';
+    const { locale, setLocale, t } = useLanguage();
+    const isSpanish = locale === "es";
 
-  const toggleLanguage = () => {
-    setLocale(isSpanish ? 'en' : 'es');
-  };
+    const toggleLanguage = () => {
+        setLocale(isSpanish ? "en" : "es");
+    };
 
-  return (
-    <div className="flex items-center space-x-2">
-      <Label htmlFor="language-switch" className="text-sm cursor-pointer">
-        {isSpanish ? t('languageSwitcherLabelEN') : t('languageSwitcherLabelES')}
-      </Label>
-      <Switch
-        id="language-switch"
-        checked={isSpanish}
-        onCheckedChange={toggleLanguage}
-        aria-label={t('languageToggleARIALabel')}
-      />
-    </div>
-  );
+    return (
+        <button
+            onClick={toggleLanguage}
+            className="bg-transparent border-none cursor-pointer text-primary hover:text-primary/80 font-medium transition-colors hover:underline px-2 py-1 text-sm focus:outline-none"
+            aria-label={t("languageToggleARIALabel")}
+        >
+            {isSpanish
+                ? t("languageSwitcherLabelEN")
+                : t("languageSwitcherLabelES")}
+        </button>
+    );
 }
