@@ -94,7 +94,7 @@ const currencyOrder: Record<CurrencyLabelKey, number> = {
 function PageLoading() {
     const { t } = useLanguage();
     return (
-        <div className="flex flex-col min-h-screen bg-background text-foreground items-center justify-center p-4">
+        <div className="dolar-background flex flex-col min-h-screen bg-background text-foreground items-center justify-center p-4">
             <RefreshCw className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-primary mb-3 sm:mb-4" />
             <p className="text-lg sm:text-xl text-muted-foreground">
                 {t("loadingDatePicker")}
@@ -109,15 +109,15 @@ function PesoWatcherPageContent() {
     const historyTableRef = useRef<HTMLDivElement>(null);
     const [tableSortEffect, setTableSortEffect] = useState(false);
     const [activeButton, setActiveButton] = useState<string | null>(null);
-    const searchParams = useSearchParams();
+    const _searchParams = useSearchParams();
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(
         undefined
     );
     const [calendarMonth, setCalendarMonth] = useState<Date>(
         startOfMonth(new Date())
     );
-    const [currencyData, setCurrencyData] = useState<CurrencyData | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [_currencyData, setCurrencyData] = useState<CurrencyData | null>(null);
+    const [_isLoading, setIsLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState<ModalContent | null>(null);
 
@@ -136,7 +136,7 @@ function PesoWatcherPageContent() {
         eur: true,
     });
 
-    const tableRef = useRef<HTMLTableElement | null>(null);
+    const _tableRef = useRef<HTMLTableElement | null>(null);
 
     const fetchCurrencyData = useCallback(async () => {
         if (!selectedDate || !isValid(selectedDate)) {
@@ -215,11 +215,11 @@ function PesoWatcherPageContent() {
                     } catch { }
                     errors.push(errorMsg);
                 }
-            } catch (error: any) {
+            } catch (error: unknown) {
                 errors.push(
                     `USD (Blue) API Fetch Error (${format(selectedDate, "P", {
                         locale: dateLocale,
-                    })}): ${error.message || "Network error"}`
+                    })}): ${error instanceof Error ? error.message : "Network error"}`
                 );
             }
 
@@ -272,13 +272,13 @@ function PesoWatcherPageContent() {
                     } catch { }
                     errors.push(errorMsg);
                 }
-            } catch (error: any) {
+            } catch (error: unknown) {
                 errors.push(
                     `USD (Oficial) API Fetch Error (${format(
                         selectedDate,
                         "P",
                         { locale: dateLocale }
-                    )}): ${error.message || "Network error"}`
+                    )}): ${error instanceof Error ? error.message : "Network error"}`
                 );
             }
 
@@ -326,11 +326,11 @@ function PesoWatcherPageContent() {
                     } catch { }
                     errors.push(errorMsg);
                 }
-            } catch (error: any) {
+            } catch (error: unknown) {
                 errors.push(
                     `EUR API Fetch Error (${format(selectedDate, "P", {
                         locale: dateLocale,
-                    })}): ${error.message || "Network error"}`
+                    })}): ${error instanceof Error ? error.message : "Network error"}`
                 );
             }
 
@@ -572,14 +572,15 @@ function PesoWatcherPageContent() {
                 description: modalDescription,
             });
             setIsModalOpen(true);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Critical error in fetchCurrencyData:", error);
             setModalContent({
                 title: t("criticalErrorTitle"),
                 description: (
                     <p className="text-destructive font-medium">
-                        {error.message ||
-                            "An unexpected critical error occurred."}
+                        {error instanceof Error 
+                            ? error.message 
+                            : "An unexpected critical error occurred."}
                     </p>
                 ),
             });
@@ -793,7 +794,7 @@ function PesoWatcherPageContent() {
                                 sell: null,
                             });
                         }
-                    } catch (error) {
+                    } catch {
                         historicalRates.push({
                             id: `${dateStr}-${config.labelKey}`,
                             date: dateStr,
@@ -921,7 +922,7 @@ function PesoWatcherPageContent() {
     }, [flatHistoricalRates, sortConfig, currencyFilters]);
 
     return (
-        <div className="flex flex-col min-h-screen bg-background text-foreground">
+        <div className="dolar-background flex flex-col min-h-screen bg-background text-foreground">
             <main className="container mx-auto p-4 sm:p-6 md:p-8 flex flex-col items-center flex-grow">
                 <header className="mb-6 sm:mb-10 text-center w-full">
                     <div className="flex justify-center sm:justify-end w-full mb-2 sm:mb-0 sm:absolute sm:top-4 sm:right-4 md:top-6 md:right-6">

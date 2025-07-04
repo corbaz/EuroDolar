@@ -53,7 +53,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     }
     // Set initial document lang attribute
     document.documentElement.lang = storedLocale ?? 'en';
-  }, []);
+  }, [setLocaleState]);
 
   const handleSetLocale = useCallback((newLocale: AppLocale) => {
     setLocale(newLocale);
