@@ -1260,6 +1260,10 @@ function PesoWatcherPageContent() {
                         </CardContent>
                     </Card>
                 </div>
+
+                <footer className="footer-overlay text-center p-4 lg:p-2 text-xs text-muted-foreground border-t border-border mt-6 sm:mt-8 lg:mt-4">
+                    {t("footerCopyrightText", { year: new Date().getFullYear() })}
+                </footer>
                 </div>
 
                 {modalContent && (
@@ -1286,13 +1290,6 @@ function PesoWatcherPageContent() {
                     </Dialog>
                 )}
             </main>
-            <div className="container mx-auto p-4 sm:p-6 md:p-8 lg:p-4 flex justify-center">
-                <div className="w-full max-w-6xl">
-                    <footer className="footer-overlay text-center p-4 lg:p-2 text-xs text-muted-foreground border-t border-border">
-                        {t("footerCopyrightText", { year: new Date().getFullYear() })}
-                    </footer>
-                </div>
-            </div>
         </div>
     );
 }
