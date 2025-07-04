@@ -49,5 +49,10 @@
   "usdBlueLabel": "USD (Blue)",
   "usdOficialLabel": "USD (Official)",
   "ventaShort": "Sell",
-  "yearSelectPlaceholder": "Year"
+  "yearSelectPlaceholder": "Year",
+  "filterLabel": "Filter by:",
+  "filterUsdBlue": "USD Blue",
+  "filterUsdOficial": "USD Official",
+  "filterEur": "EUR",
+  "showAllCurrencies": "Show all currencies"
 }

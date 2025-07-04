@@ -52,6 +52,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { CurrencyBg } from "@/components/ui/currency-bg";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface UsdQuote {
     compra: number | null;
@@ -128,6 +129,12 @@ function PesoWatcherPageContent() {
         key: "date" | "currencyLabelKey";
         direction: "asc" | "desc";
     }>({ key: "date", direction: "desc" });
+
+    const [currencyFilters, setCurrencyFilters] = useState({
+        usdBlue: true,
+        usdOficial: true,
+        eur: true,
+    });
 
     const tableRef = useRef<HTMLTableElement | null>(null);
 
@@ -858,7 +865,22 @@ function PesoWatcherPageContent() {
 
     const sortedHistoricalRates = useMemo(() => {
         if (!flatHistoricalRates) return [];
-        const sortableRates = [...flatHistoricalRates];
+        
+        // First filter by currency selection
+        const filteredRates = flatHistoricalRates.filter((rate) => {
+            switch (rate.currencyLabelKey) {
+                case "usdBlueLabel":
+                    return currencyFilters.usdBlue;
+                case "usdOficialLabel":
+                    return currencyFilters.usdOficial;
+                case "eurLabel":
+                    return currencyFilters.eur;
+                default:
+                    return true;
+            }
+        });
+
+        const sortableRates = [...filteredRates];
 
         if (sortConfig.key === "date") {
             sortableRates.sort((a, b) => {
@@ -896,7 +918,7 @@ function PesoWatcherPageContent() {
             });
         }
         return sortableRates;
-    }, [flatHistoricalRates, sortConfig]);
+    }, [flatHistoricalRates, sortConfig, currencyFilters]);
 
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -1022,6 +1044,67 @@ function PesoWatcherPageContent() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-6">
+                            <div className="mb-4 p-3 bg-card-foreground/[.03] rounded-lg border border-border">
+                                <div className="text-sm font-medium text-foreground mb-3">
+                                    {t("filterLabel")}
+                                </div>
+                                <div className="flex flex-wrap gap-4">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="filter-usd-blue"
+                                            checked={currencyFilters.usdBlue}
+                                            onCheckedChange={(checked) =>
+                                                setCurrencyFilters(prev => ({
+                                                    ...prev,
+                                                    usdBlue: checked === true
+                                                }))
+                                            }
+                                        />
+                                        <label
+                                            htmlFor="filter-usd-blue"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                        >
+                                            {t("filterUsdBlue")}
+                                        </label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="filter-usd-oficial"
+                                            checked={currencyFilters.usdOficial}
+                                            onCheckedChange={(checked) =>
+                                                setCurrencyFilters(prev => ({
+                                                    ...prev,
+                                                    usdOficial: checked === true
+                                                }))
+                                            }
+                                        />
+                                        <label
+                                            htmlFor="filter-usd-oficial"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                        >
+                                            {t("filterUsdOficial")}
+                                        </label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="filter-eur"
+                                            checked={currencyFilters.eur}
+                                            onCheckedChange={(checked) =>
+                                                setCurrencyFilters(prev => ({
+                                                    ...prev,
+                                                    eur: checked === true
+                                                }))
+                                            }
+                                        />
+                                        <label
+                                            htmlFor="filter-eur"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                        >
+                                            {t("filterEur")}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                             <div className="flex items-center border-b pb-2 mb-2 text-xs font-medium text-muted-foreground">
                                 {" "}
                                 <div className="w-[35%] px-2">
