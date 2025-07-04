@@ -310,4 +310,54 @@ body {
     background-color: hsl(var(--card) / 0.9);
     backdrop-filter: blur(8px);
   }
+
+  /* Layout responsivo para que todo entre en el viewport en desktop */
+  @media (min-width: 1024px) {
+    .desktop-full-height {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .desktop-content-distributed {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 0;
+    }
+
+    .desktop-main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .desktop-cards-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .desktop-grid {
+      height: 100%;
+      align-items: stretch;
+    }
+
+    .desktop-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .desktop-card-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+  }
 }

@@ -922,10 +922,10 @@ function PesoWatcherPageContent() {
     }, [flatHistoricalRates, sortConfig, currencyFilters]);
 
     return (
-        <div className="dolar-background flex flex-col min-h-screen bg-background text-foreground">
-            <main className="container mx-auto p-4 sm:p-6 md:p-8 flex flex-col items-center flex-grow">
-                <div className="w-full max-w-6xl">
-                    <header className="header-overlay mb-6 sm:mb-10 text-center w-full">
+        <div className="dolar-background desktop-full-height flex flex-col min-h-screen bg-background text-foreground">
+            <main className="desktop-content-distributed container mx-auto p-4 sm:p-6 md:p-8 flex flex-col items-center flex-grow">
+                <div className="w-full max-w-6xl desktop-main-content">
+                    <header className="header-overlay mb-6 sm:mb-10 lg:mb-6 text-center w-full">
                         <div className="flex justify-center sm:justify-end w-full mb-2 sm:mb-0 sm:absolute sm:top-4 sm:right-4 md:top-6 md:right-6">
                             <div className="language-switcher-overlay">
                                 <LanguageSwitcher />
@@ -942,15 +942,15 @@ function PesoWatcherPageContent() {
                         </p>
                     </header>
 
-                    <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-                    <Card className="content-overlay shadow-lg rounded-xl border-border lg:col-span-1">
+                    <div className="desktop-cards-container w-full grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 desktop-grid">
+                    <Card className="content-overlay desktop-card shadow-lg rounded-xl border-border lg:col-span-1">
                         <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
                             <CardTitle className="flex items-center justify-center text-lg sm:text-xl text-center">
                                 <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                                 {t("selectDateCardTitle")}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-4 sm:p-6">
+                        <CardContent className="desktop-card-content p-4 sm:p-6">
                             <div className="mx-auto w-full max-w-[276px] sm:max-w-none sm:w-[278px]">
                                 <div className="flex flex-row gap-2 mb-4">
                                     <Select
@@ -1040,14 +1040,14 @@ function PesoWatcherPageContent() {
                         </CardContent>
                     </Card>
 
-                    <Card className="content-overlay shadow-lg rounded-xl border-border lg:col-span-2">
+                    <Card className="content-overlay desktop-card shadow-lg rounded-xl border-border lg:col-span-2">
                         <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
                             <CardTitle className="flex items-center justify-center text-lg sm:text-xl">
                                 <History className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" />{" "}
                                 {t("historyCardTitle")}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-4 sm:p-6">
+                        <CardContent className="desktop-card-content p-4 sm:p-6">
                             <div className="mb-4 p-3 bg-card-foreground/[.03] rounded-lg border border-border">
                                 <div className="text-sm font-medium text-foreground mb-3">
                                     {t("filterLabel")}
@@ -1286,9 +1286,9 @@ function PesoWatcherPageContent() {
                     </Dialog>
                 )}
             </main>
-            <div className="container mx-auto p-4 sm:p-6 md:p-8 flex justify-center">
+            <div className="container mx-auto p-4 sm:p-6 md:p-8 lg:p-4 flex justify-center">
                 <div className="w-full max-w-6xl">
-                    <footer className="footer-overlay text-center p-4 text-xs text-muted-foreground border-t border-border">
+                    <footer className="footer-overlay text-center p-4 lg:p-2 text-xs text-muted-foreground border-t border-border">
                         {t("footerCopyrightText", { year: new Date().getFullYear() })}
                     </footer>
                 </div>
