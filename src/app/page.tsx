@@ -924,23 +924,26 @@ function PesoWatcherPageContent() {
     return (
         <div className="dolar-background flex flex-col min-h-screen bg-background text-foreground">
             <main className="container mx-auto p-4 sm:p-6 md:p-8 flex flex-col items-center flex-grow">
-                <header className="mb-6 sm:mb-10 text-center w-full">
-                    <div className="flex justify-center sm:justify-end w-full mb-2 sm:mb-0 sm:absolute sm:top-4 sm:right-4 md:top-6 md:right-6">
-                        <LanguageSwitcher />
-                    </div>
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary mt-4 sm:mt-0">
-                        {t("headerTitle")}
-                    </h1>
-                    <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 max-w-lg mx-auto">
-                        {t("headerSubtitle1")}
-                    </p>
-                    <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 max-w-lg mx-auto">
-                        {t("headerSubtitle2")}
-                    </p>
-                </header>
+                <div className="w-full max-w-6xl">
+                    <header className="header-overlay mb-6 sm:mb-10 text-center w-full">
+                        <div className="flex justify-center sm:justify-end w-full mb-2 sm:mb-0 sm:absolute sm:top-4 sm:right-4 md:top-6 md:right-6">
+                            <div className="language-switcher-overlay">
+                                <LanguageSwitcher />
+                            </div>
+                        </div>
+                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary mt-4 sm:mt-0">
+                            {t("headerTitle")}
+                        </h1>
+                        <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 max-w-lg mx-auto">
+                            {t("headerSubtitle1")}
+                        </p>
+                        <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2 max-w-lg mx-auto">
+                            {t("headerSubtitle2")}
+                        </p>
+                    </header>
 
-                <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl">
-                    <Card className="shadow-lg rounded-xl border-border lg:col-span-1">
+                    <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+                    <Card className="content-overlay shadow-lg rounded-xl border-border lg:col-span-1">
                         <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
                             <CardTitle className="flex items-center justify-center text-lg sm:text-xl text-center">
                                 <CalendarIcon className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" />
@@ -1037,7 +1040,7 @@ function PesoWatcherPageContent() {
                         </CardContent>
                     </Card>
 
-                    <Card className="shadow-lg rounded-xl border-border lg:col-span-2">
+                    <Card className="content-overlay shadow-lg rounded-xl border-border lg:col-span-2">
                         <CardHeader className="bg-card-foreground/[.03] p-4 sm:p-6">
                             <CardTitle className="flex items-center justify-center text-lg sm:text-xl">
                                 <History className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" />{" "}
@@ -1257,6 +1260,7 @@ function PesoWatcherPageContent() {
                         </CardContent>
                     </Card>
                 </div>
+                </div>
 
                 {modalContent && (
                     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -1282,9 +1286,13 @@ function PesoWatcherPageContent() {
                     </Dialog>
                 )}
             </main>
-            <footer className="text-center p-4 text-xs text-muted-foreground border-t border-border mt-auto">
-                {t("footerCopyrightText", { year: new Date().getFullYear() })}
-            </footer>
+            <div className="container mx-auto p-4 sm:p-6 md:p-8 flex justify-center">
+                <div className="w-full max-w-6xl">
+                    <footer className="footer-overlay text-center p-4 text-xs text-muted-foreground border-t border-border">
+                        {t("footerCopyrightText", { year: new Date().getFullYear() })}
+                    </footer>
+                </div>
+            </div>
         </div>
     );
 }

@@ -254,4 +254,60 @@ body {
     position: relative;
     z-index: 1;
   }
+
+  /* Recuadros con fondo semitransparente para mejorar legibilidad */
+  .content-overlay {
+    background-color: hsl(var(--background) / 0.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid hsl(var(--border) / 0.3);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .dark .content-overlay {
+    background-color: hsl(var(--background) / 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsl(var(--border) / 0.2);
+  }
+
+  /* Para headers y títulos */
+  .header-overlay {
+    background-color: hsl(var(--card) / 0.9);
+    backdrop-filter: blur(6px);
+    border-radius: var(--radius);
+    padding: 1rem;
+    border: 1px solid hsl(var(--border) / 0.2);
+  }
+
+  .dark .header-overlay {
+    background-color: hsl(var(--card) / 0.9);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Para el switcher de idioma */
+  .language-switcher-overlay {
+    background-color: hsl(var(--background) / 0.9);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius);
+    padding: 0.5rem;
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  .dark .language-switcher-overlay {
+    background-color: hsl(var(--background) / 0.95);
+  }
+
+  /* Para el footer */
+  .footer-overlay {
+    background-color: hsl(var(--card) / 0.9);
+    backdrop-filter: blur(6px);
+    border-radius: var(--radius);
+    padding: 1rem;
+    border: 1px solid hsl(var(--border) / 0.2);
+  }
+
+  .dark .footer-overlay {
+    background-color: hsl(var(--card) / 0.9);
+    backdrop-filter: blur(8px);
+  }
 }
